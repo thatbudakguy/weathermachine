@@ -12,7 +12,7 @@ for detailed log output:
     $ python katapult.py --logging_level=DEBUG
 """
 
-import gflags, httplib2, logging, os, pprint, sys, re, time, json
+import gflags, httplib2, logging, os, pprint, sys, re, time, datetime, json
 import pprint
 
 from apiclient.discovery import build
@@ -23,35 +23,35 @@ from oauth2client.tools import run
 FLAGS = gflags.FLAGS
 
 # CLIENT_SECRETS, name of a file that will hold the OAuth 2.0 information for this
-# application, including client_id and client_secret, which are found
-# on the API Access tab on the Google APIs
-# Console <http://code.google.com/apis/console>
+# application, including client_id and client_secret, which are found on the
+# API Access tab on the Google APIs Console <http://code.google.com/apis/console>
 CLIENT_SECRETS = 'secret.json'
 
 # Populate the CLIENT_SECRETS file using non-sensitive data from auth.json
 # and with sensitive data taken from environment variables
-with open('auth.json', 'r') as f:
-    json_string = f.read()
+with open('auth.json', 'r') as auth:
+    json_string = auth.read()
 parsed_json = json.loads(json_string)
 parsed_json['installed']['client_id'] = os.environ.get('KATAPULT_CLIENT_ID')
 parsed_json['installed']['client_secret'] = os.environ.get('KATAPULT_CLIENT_SECRET')
 json_string = json.dumps(parsed_json, sort_keys=True, indent=4, separators=(',',':'))
-with open(CLIENT_SECRETS, 'w') as f:
-    f.write(json_string)
+with open(CLIENT_SECRETS, 'w') as secrets:
+    secrets.write(json_string)
 
 # Helpful message to display in the browser if the CLIENT_SECRETS file
 # is missing.
-MISSING_CLIENT_SECRETS_MESSAGE = """
-WARNING: Please configure OAuth 2.0
-
-To run katapult you will need to configure environment variables:
-    $KATAPULT_CLIENT_ID
-    $KATAPULT_CLIENT_SECRET
-
-Please insert the corresponding information from the
-Google APIs Console <https://code.google.com/apis/console>.
-
-"""
+MISSING_CLIENT_SECRETS_MESSAGE = ""
+# MISSING_CLIENT_SECRETS_MESSAGE = """
+# WARNING: Please configure OAuth 2.0
+#
+# To run katapult you will need to configure environment variables:
+#     $KATAPULT_CLIENT_ID
+#     $KATAPULT_CLIENT_SECRET
+#
+# Please insert the corresponding information from the
+# Google APIs Console <https://code.google.com/apis/console>.
+#
+# """
 
 # Set up a Flow object to be used if we need to authenticate.
 FLOW = flow_from_clientsecrets(CLIENT_SECRETS,
@@ -210,7 +210,8 @@ def main(argv):
 
     open_logfile()
 
-    log( 'Authentication success, awaiting commands' )
+    # Log when we
+    log( '%s: Authentication success, awaiting commands' % datetime.datetime.now() )
     sys.exit()
 
     # try:
