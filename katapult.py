@@ -50,7 +50,7 @@ Google APIs Console <https://code.google.com/apis/console>.
 # Set up a Flow object to be used if we need to authenticate.
 FLOW = flow_from_clientsecrets('secret.json',
     scope='https://www.googleapis.com/auth/drive',
-    message=MISSING_CLIENT_SECRETS_MESSAGE)
+    message='missing secret')
 
 # The gflags module makes defining command-line options easy for
 # applications. Run this program with the '--help' argument to see
