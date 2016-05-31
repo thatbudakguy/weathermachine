@@ -4,6 +4,8 @@ import os
 import json
 
 from apiclient import discovery
+from apiclient.http import MediaFileUpload
+from apiclient import errors
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
@@ -27,7 +29,7 @@ with open('secret.json', 'w') as secret:
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/drive-python-quickstart.json
-SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly'
+SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Drive API Python Quickstart'
 
@@ -60,6 +62,21 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
+def insert(service,file,parent_id):
+    """Uploads a file.
+
+    """
+    media = MediaFileUpload(file,resumable=True)
+    file_metadata =  {'title':'Test text file'}
+    if parent_id:
+        file_metadata['parents'] = [{'id':parent_id}]
+    try:
+        file = service.files().insert(body=file_metadata,media_body=media).execute()
+        return file
+    except errors.HttpError, error:
+        print('An error occurred: %s' % error)
+        return None
+
 def main():
     """Shows basic usage of the Google Drive API.
 
@@ -68,17 +85,10 @@ def main():
     """
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
-    service = discovery.build('drive', 'v3', http=http)
+    service = discovery.build('drive', 'v2', http=http)
 
-    results = service.files().list(
-        pageSize=10,fields="nextPageToken, files(id, name)").execute()
-    items = results.get('files', [])
-    if not items:
-        print('No files found.')
-    else:
-        print('Files:')
-        for item in items:
-            print('{0} ({1})'.format(item['name'], item['id']))
+    uploaded_file = insert(service,'files/testupload.txt','0Byn7eiAVCHMNaGZaaGcybGYwdDA')
+    if uploaded_file: print('Success: uploaded file %s' % uploaded_file.get('title'))
 
 if __name__ == '__main__':
     main()
