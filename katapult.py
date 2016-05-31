@@ -21,7 +21,7 @@ with open('auth.json', 'r') as auth:
 parsed_json = json.loads(json_string)
 parsed_json['installed']['client_id'] = os.environ.get('KATAPULT_CLIENT_ID')
 parsed_json['installed']['client_secret'] = os.environ.get('KATAPULT_CLIENT_SECRET')
-secret_json_string = json.dumps(parsed_json, sort_keys=True, indent=4, separators=(',',':'))
+secret_json_string = json.dumps(parsed_json, sort_keys=True, separators=(',',':'))
 with open('secret.json', 'w') as secret:
     secret.write(secret_json_string)
 
