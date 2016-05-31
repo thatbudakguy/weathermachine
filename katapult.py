@@ -13,10 +13,21 @@ try:
 except ImportError:
     flags = None
 
+# Populate the CLIENT_SECRET_FILE using non-sensitive data from auth.json
+# and with sensitive data taken from environment variables
+with open('auth.json', 'r') as auth:
+    json_string = auth.read()
+parsed_json = json.loads(json_string)
+parsed_json['installed']['client_id'] = os.environ.get('KATAPULT_CLIENT_ID')
+parsed_json['installed']['client_secret'] = os.environ.get('KATAPULT_CLIENT_SECRET')
+secret_json_string = json.dumps(parsed_json, sort_keys=True, indent=4, separators=(',',':'))
+with open('secret.json', 'w') as secret:
+    secret.write(secret_json_string)
+
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/drive-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly'
-CLIENT_SECRET_FILE = 'client_secret.json'
+CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Drive API Python Quickstart'
 
 
