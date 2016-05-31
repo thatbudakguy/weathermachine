@@ -1,8 +1,0 @@
-language: python
-branches:
-  only:
-  - master
-notifications:
-  slack: watzekdi:ZTsITfxVMVtk4W9mGDv9NGG8
-script:
-  - python --version

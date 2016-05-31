@@ -1,3 +1,10 @@
+# Downloaded files from drive
+downloaded/
+
+# Authentication
+secret.json
+drive.dat
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
