@@ -2,6 +2,7 @@ from __future__ import print_function
 import httplib2
 import os
 import json
+import datetime
 
 from apiclient import discovery
 from apiclient.http import MediaFileUpload
@@ -62,6 +63,14 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
+def open_logfile():
+    global LOG_FILE
+    LOG_FILE = open('upload_logs.dat', 'w+')
+
+def log(msg):
+    stamp = datetime.datetime.now()
+    LOG_FILE.write((str(stamp) + ': ' + msg + '\n').encode('utf8'))
+
 def insert(service,file,parent_id):
     """Uploads a file.
 
@@ -72,9 +81,11 @@ def insert(service,file,parent_id):
         file_metadata['parents'] = [{'id':parent_id}]
     try:
         file = service.files().insert(body=file_metadata,media_body=media).execute()
+        log('Success: uploaded file %s' % file.get('title'))
         return file
     except errors.HttpError, error:
-        print('An error occurred: %s' % error)
+        log('Upload failed: %s' % error)
+        sys.exit('Error: ' + error)
         return None
 
 def main():
@@ -87,8 +98,9 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
 
-    uploaded_file = insert(service,'files/testupload.txt','0Byn7eiAVCHMNaGZaaGcybGYwdDA')
-    if uploaded_file: print('Success: uploaded file %s' % uploaded_file.get('title'))
+    open_logfile()
+
+    insert(service,'files/testupload.txt','0Byn7eiAVCHMNaGZaaGcybGYwdDA')
 
 if __name__ == '__main__':
     main()
