@@ -35,6 +35,9 @@ SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Drive API Python Quickstart'
 
+# Dictionary for folder names and ids
+DIR = {"files":"0B5UxNKysLgN8blFLTkhhd2pLbjg"}
+
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -72,22 +75,66 @@ def log(msg):
     stamp = datetime.datetime.now()
     LOG_FILE.write((str(stamp) + ': ' + msg + '\n').encode('utf8'))
 
-def insert(service,file,parent_id):
+def uploadFile(service,file,parent_id):
     """Uploads a file.
 
     """
     media = MediaFileUpload(file,resumable=True)
-    file_metadata =  {'title':'Test text file'}
+    head, tail = os.path.split(file)
+    file_metadata =  {'title': tail }
     if parent_id:
         file_metadata['parents'] = [{'id':parent_id}]
     try:
-        file = service.files().insert(body=file_metadata,media_body=media).execute()
-        log('Success: uploaded file %s' % file.get('title'))
-        return file
+        file_uploaded = service.files().insert(body=file_metadata,media_body=media).execute()
+        log('Success: uploaded file %s' % file_uploaded.get('title'))
     except errors.HttpError, error:
         log('Upload failed: %s' % error)
-        sys.exit('Error: ' + error)
-        return None
+        sys.exit('Error: %s' % error)
+
+def createDir(service, dirName):
+    """Creates a directory on google drive and returns its id
+
+    """
+    head, tail = os.path.split(dirName)
+    print("Head: %s" % head)
+    print("Tail: %s" % tail)
+    parent_id = DIR[head]
+    file_metadata = {
+        'title' : tail,
+        'mimeType' : 'application/vnd.google-apps.folder'
+    }
+    if parent_id:
+        file_metadata['parents'] = [{'id':parent_id}]
+    try:
+        folder = service.files().insert(body=file_metadata,fields='id').execute()
+        log('Success: created a directory %s' % folder.get('title'))
+        return folder.get('id')
+    except errors.HttpError, error:
+        log('Directory Creation failed: %s' % error)
+        sys.exit('Error: %s' % error)
+
+
+def getDirID(service, dirName):
+    """Checks if a directory id exists, if not creates a directory and returns its id
+
+    """
+    if dirName in DIR:
+        return DIR[dirName]
+    else:
+        id = createDir(service, dirName)
+        DIR[dirName] = id
+        return id
+
+def uploadDir(service,root_dir):
+    """Traverse through a given root_directory
+
+    """
+    for dirName, subdirList, fileList in os.walk(root_dir):
+        id = getDirID(service, dirName)
+        for fname in fileList:
+            print("\t%s" % fname)
+            file_path = dirName+"/"+fname
+            uploadFile(service, file_path, id)
 
 def main():
     """Shows basic usage of the Google Drive API.
@@ -101,7 +148,7 @@ def main():
 
     open_logfile()
 
-    insert(service,'files/testupload.txt','0B5UxNKysLgN8blFLTkhhd2pLbjg')
+    uploadDir(service, "files")
 
 if __name__ == '__main__':
     main()
