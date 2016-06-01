@@ -1,1 +1,11 @@
 2016-05-31 17:01:56.284048: Success: uploaded file Test text file
+2016-06-01 14:35:36.321880: Directory Creation failed: <HttpError 404 when requesting https://www.googleapis.com/drive/v2/files?fields=id&alt=json returned "File not found: 0B5UxNKysLgN8blFLTkhhd2pLbjg">
+2016-06-01 14:37:48.214421: Success: created a directory None
+2016-06-01 14:37:50.091849: Success: uploaded file batman.jpg
+2016-06-01 14:37:51.949742: Success: uploaded file batman.png
+2016-06-01 14:37:52.362173: Success: created a directory None
+2016-06-01 14:37:53.379910: Success: uploaded file test_file.txt
+2016-06-01 14:37:53.722095: Success: created a directory None
+2016-06-01 14:37:54.637427: Success: uploaded file testupload.txt
+2016-06-01 14:37:55.185122: Success: created a directory None
+2016-06-01 14:37:56.338980: Success: uploaded file test_file2.txt

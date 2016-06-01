@@ -36,7 +36,7 @@ CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Drive API Python Quickstart'
 
 # Dictionary for folder names and ids
-DIR = {"files":"0B5UxNKysLgN8blFLTkhhd2pLbjg"}
+DIR = {"files":"0Byn7eiAVCHMNaGZaaGcybGYwdDA"}
 
 
 def get_credentials():
