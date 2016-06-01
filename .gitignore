@@ -1,6 +1,9 @@
 #Test files directory
 files/
 
+#Upload log
+upload_logs.dat
+
 # Authentication
 secret.json
 drive.dat
