@@ -3,6 +3,7 @@ import httplib2
 import os
 import json
 import datetime
+import sys
 
 from apiclient import discovery
 from apiclient.http import MediaFileUpload
@@ -100,7 +101,7 @@ def main():
 
     open_logfile()
 
-    insert(service,'files/testupload.txt','0Byn7eiAVCHMNaGZaaGcybGYwdDA')
+    insert(service,'files/testupload.txt','0B5UxNKysLgN8blFLTkhhd2pLbjg')
 
 if __name__ == '__main__':
     main()
