@@ -66,7 +66,7 @@ def get_credentials():
 
 def open_logfile():
     global LOG_FILE
-    LOG_FILE = open('upload_logs.dat', 'w+')
+    LOG_FILE = open('upload_logs.dat', 'a')
 
 def log(msg):
     stamp = datetime.datetime.now()
