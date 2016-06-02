@@ -146,7 +146,7 @@ def uploadDir(service,root_dir):
             uploadFile(service, file_path, id)
 
 def exportDIR():
-    file = open('dir_ids.csv', 'w+')
+    file = open('dir_ids.csv', 'w')
     for dir, id in DIR.iteritems():
         file.write(dir + "," + id + "\n")
     file.close()
