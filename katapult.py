@@ -38,7 +38,7 @@ CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Drive API Python Quickstart'
 
 # Dictionary for folder names and ids
-DIR = {"files":"0Byn7eiAVCHMNaGZaaGcybGYwdDA"}
+DIR = {}
 
 
 def get_credentials():
@@ -93,16 +93,15 @@ def uploadFile(service,file,parent_id):
         log('Upload failed: %s' % error)
         sys.exit('Error: %s' % error)
 
-def createDir(service, dirName):
+def logDIR(dir, id):
+    DIR[dir] = id
+
+def createDir(service, dirName, parent_id = None):
     """Creates a directory on google drive and returns its id
 
     """
-    head, tail = os.path.split(dirName)
-    print("Head: %s" % head)
-    print("Tail: %s" % tail)
-    parent_id = DIR[head]
     file_metadata = {
-        'title' : tail,
+        'title' : dirName,
         'mimeType' : 'application/vnd.google-apps.folder'
     }
     if parent_id:
@@ -123,8 +122,10 @@ def getDirID(service, dirName):
     if dirName in DIR:
         return DIR[dirName]
     else:
-        id = createDir(service, dirName)
-        DIR[dirName] = id
+        head, tail = os.path.split(dirName)
+        parent_id = DIR[head]
+        id = createDir(service, tail, parent_id)
+        logDIR(dirName, id)
         return id
 
 def uploadDir(service,root_dir):
@@ -139,10 +140,7 @@ def uploadDir(service,root_dir):
             uploadFile(service, file_path, id)
 
 def main():
-    """Shows basic usage of the Google Drive API.
-
-    Creates a Google Drive API service object and outputs the names and IDs
-    for up to 10 files.
+    """Main Function
     """
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
@@ -153,10 +151,9 @@ def main():
     root_dir = ARGS.root_dir[0][:-1]
     head, tail = os.path.split(root_dir)
 
-    print(tail)
-
-    # root_dir_id = getDirID(service,head)
-    # uploadDir(service, "files")
+    id = createDir(service, tail)
+    logDIR(tail, id)
+    uploadDir(service, "files")
 
 if __name__ == '__main__':
     main()
