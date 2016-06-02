@@ -35,7 +35,7 @@ with open('secret.json', 'w') as secret:
 # at ~/.credentials/drive-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
-APPLICATION_NAME = 'Drive API Python Quickstart'
+APPLICATION_NAME = 'Katapult'
 
 # Dictionary for folder names and ids
 DIR = {}
@@ -89,6 +89,7 @@ def uploadFile(service,file,parent_id):
     try:
         file_uploaded = service.files().insert(body=file_metadata,media_body=media).execute()
         log('Success: uploaded file %s' % file_uploaded.get('title'))
+        print('uploaded file %s' % file_uploaded.get('title'))
     except errors.HttpError, error:
         log('Upload failed: %s' % error)
         sys.exit('Error: %s' % error)
@@ -108,7 +109,8 @@ def createDir(service, dirName, parent_id = None):
         file_metadata['parents'] = [{'id':parent_id}]
     try:
         folder = service.files().insert(body=file_metadata,fields='id').execute()
-        log('Success: created a directory %s' % folder.get('title'))
+        log('Success: created a directory %s' % dirName)
+        print('created a directory %s' % dirName)
         return folder.get('id')
     except errors.HttpError, error:
         log('Directory Creation failed: %s' % error)
@@ -135,7 +137,6 @@ def uploadDir(service,root_dir):
     for dirName, subdirList, fileList in os.walk(root_dir):
         id = getDirID(service, dirName)
         for fname in fileList:
-            print("\t%s" % fname)
             file_path = dirName+"/"+fname
             uploadFile(service, file_path, id)
 
