@@ -9,3 +9,83 @@
 2016-06-01 14:37:54.637427: Success: uploaded file testupload.txt
 2016-06-01 14:37:55.185122: Success: created a directory None
 2016-06-01 14:37:56.338980: Success: uploaded file test_file2.txt
+2016-06-02 08:47:32.881296: Success: created a directory None
+2016-06-02 08:47:36.097934: Success: uploaded file batman.jpg
+2016-06-02 08:47:39.203673: Success: uploaded file batman.png
+2016-06-02 08:47:39.848090: Success: created a directory None
+2016-06-02 08:47:41.374836: Success: uploaded file test_file.txt
+2016-06-02 08:47:42.541647: Success: created a directory None
+2016-06-02 08:47:44.100795: Success: uploaded file testupload.txt
+2016-06-02 08:47:44.540688: Success: created a directory None
+2016-06-02 08:47:45.634489: Success: uploaded file test_file2.txt
+2016-06-02 09:08:52.055852: Success: created a directory None
+2016-06-02 09:08:55.924193: Success: uploaded file batman.jpg
+2016-06-02 09:08:59.315805: Success: uploaded file batman.png
+2016-06-02 09:08:59.815241: Success: created a directory None
+2016-06-02 09:09:01.038417: Success: uploaded file test_file.txt
+2016-06-02 09:09:01.522967: Success: created a directory None
+2016-06-02 09:09:02.578959: Success: uploaded file testupload.txt
+2016-06-02 09:09:03.056455: Success: created a directory None
+2016-06-02 09:09:04.224564: Success: uploaded file test_file2.txt
+2016-06-02 09:09:47.402765: Success: created a directory None
+2016-06-02 09:09:50.724747: Success: uploaded file batman.jpg
+2016-06-02 09:09:54.216111: Success: uploaded file batman.png
+2016-06-02 09:09:54.706949: Success: created a directory None
+2016-06-02 09:09:55.824288: Success: uploaded file test_file.txt
+2016-06-02 09:09:56.296092: Success: created a directory None
+2016-06-02 09:09:57.584584: Success: uploaded file testupload.txt
+2016-06-02 09:09:58.162359: Success: created a directory None
+2016-06-02 09:09:59.306775: Success: uploaded file test_file2.txt
+2016-06-02 09:12:45.403839: Success: created a directory None
+2016-06-02 09:13:07.374514: Success: created a directory None
+2016-06-02 09:13:54.020732: Success: created a directory None
+2016-06-02 09:14:31.885479: Success: created a directory None
+2016-06-02 09:14:32.503146: Success: created a directory None
+2016-06-02 09:14:36.096126: Success: uploaded file batman.jpg
+2016-06-02 09:14:41.052648: Success: uploaded file batman.png
+2016-06-02 09:14:41.448206: Success: created a directory None
+2016-06-02 09:14:42.433846: Success: uploaded file test_file.txt
+2016-06-02 09:14:42.867877: Success: created a directory None
+2016-06-02 09:14:43.913401: Success: uploaded file testupload.txt
+2016-06-02 09:14:44.532662: Success: created a directory None
+2016-06-02 09:14:45.748807: Success: uploaded file test_file2.txt
+2016-06-02 09:16:46.409278: Success: created a directory None
+2016-06-02 09:16:46.861671: Success: created a directory None
+2016-06-02 09:16:50.142312: Success: uploaded file batman.jpg
+2016-06-02 09:16:54.140731: Success: uploaded file batman.png
+2016-06-02 09:16:54.603687: Success: created a directory None
+2016-06-02 09:16:55.864891: Success: uploaded file test_file.txt
+2016-06-02 09:16:56.324642: Success: created a directory None
+2016-06-02 09:16:57.336675: Success: uploaded file testupload.txt
+2016-06-02 09:16:57.800221: Success: created a directory None
+2016-06-02 09:16:58.905834: Success: uploaded file test_file2.txt
+2016-06-02 09:18:22.203978: Success: created a directory None
+2016-06-02 09:18:22.577573: Success: created a directory None
+2016-06-02 09:18:26.669804: Success: uploaded file batman.jpg
+2016-06-02 09:18:30.523516: Success: uploaded file batman.png
+2016-06-02 09:18:30.958397: Success: created a directory None
+2016-06-02 09:18:32.189134: Success: uploaded file test_file.txt
+2016-06-02 09:18:32.741198: Success: created a directory None
+2016-06-02 09:18:33.674465: Success: uploaded file testupload.txt
+2016-06-02 09:18:34.040248: Success: created a directory None
+2016-06-02 09:18:35.638828: Success: uploaded file test_file2.txt
+2016-06-02 09:25:24.471860: Success: created a directory None
+2016-06-02 09:25:24.984673: Success: created a directory None
+2016-06-02 09:25:29.413733: Success: uploaded file batman.jpg
+2016-06-02 09:25:32.784712: Success: uploaded file batman.png
+2016-06-02 09:25:33.296227: Success: created a directory None
+2016-06-02 09:25:34.463061: Success: uploaded file test_file.txt
+2016-06-02 09:25:35.012611: Success: created a directory None
+2016-06-02 09:25:35.972433: Success: uploaded file testupload.txt
+2016-06-02 09:25:36.552371: Success: created a directory None
+2016-06-02 09:25:37.610997: Success: uploaded file test_file2.txt
+2016-06-02 09:27:44.319142: Success: created a directory files
+2016-06-02 09:27:44.766709: Success: created a directory images
+2016-06-02 09:27:48.222089: Success: uploaded file batman.jpg
+2016-06-02 09:27:51.467789: Success: uploaded file batman.png
+2016-06-02 09:27:51.939879: Success: created a directory txt_files
+2016-06-02 09:27:52.963764: Success: uploaded file test_file.txt
+2016-06-02 09:27:53.443822: Success: created a directory subdir
+2016-06-02 09:27:54.453335: Success: uploaded file testupload.txt
+2016-06-02 09:27:54.916409: Success: created a directory subdir2
+2016-06-02 09:27:55.973628: Success: uploaded file test_file2.txt
