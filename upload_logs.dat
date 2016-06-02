@@ -44,3 +44,9 @@
 2016-06-02 15:14:36.058805: Success: uploaded file testupload.txt
 2016-06-02 15:14:36.446239: Success: created a directory subdir2
 2016-06-02 15:14:37.329190: Success: uploaded file test_file2.txt
+2016-06-02 15:44:23.373346: Success: uploaded file batman.jpg
+2016-06-02 15:44:25.925508: Success: uploaded file batman.png
+2016-06-02 15:44:26.791466: Success: uploaded file test_file.txt
+2016-06-02 15:44:27.780012: Success: uploaded file test_file2.txt
+2016-06-02 15:44:28.679752: Success: uploaded file testupload.txt
+2016-06-02 15:44:29.559087: Success: uploaded file test_file2.txt

@@ -146,12 +146,18 @@ def uploadDir(service,root_dir):
             uploadFile(service, file_path, id)
 
 def exportDIR():
+    """Exports the DIR dictionary to a csv file
+
+    """
     file = open('dir_ids.csv', 'w')
     for dir, id in DIR.iteritems():
         file.write(dir + "," + id + "\n")
     file.close()
 
 def importDIR():
+    """Imports the DIR dictionary from a csv file, if any
+
+    """
     if os.path.isfile('dir_ids.csv'):
         with open('dir_ids.csv', 'r') as f:
             reader = csv.reader(f, delimiter=',')
@@ -160,6 +166,7 @@ def importDIR():
 
 def main():
     """Main Function
+
     """
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
