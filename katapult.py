@@ -14,7 +14,9 @@ from oauth2client import tools
 
 try:
     import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+    flags = argparse.ArgumentParser(parents=[tools.argparser],description='Upload files to Google Drive archive.')
+    flags.add_argument('-r','--root_dir',type=str,nargs=1,required=True,help='The directory containing all files to be uploaded.')
+    ARGS = flags.parse_args()
 except ImportError:
     flags = None
 
@@ -148,7 +150,11 @@ def main():
 
     open_logfile()
 
-    uploadDir(service, "files")
+    root_dir = ARGS.root_dir[0][:-1]
+    head, tail = os.path.split(root_dir)
+
+    # root_dir_id = getDirID(service,head)
+    # uploadDir(service, "files")
 
 if __name__ == '__main__':
     main()
