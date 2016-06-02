@@ -4,6 +4,7 @@ import os
 import json
 import datetime
 import sys
+import csv
 
 from apiclient import discovery
 from apiclient.http import MediaFileUpload
@@ -77,6 +78,9 @@ def log(msg):
     stamp = datetime.datetime.now()
     LOG_FILE.write((str(stamp) + ': ' + msg + '\n').encode('utf8'))
 
+def logDIR(dir, id):
+    DIR[dir] = id
+
 def uploadFile(service,file,parent_id):
     """Uploads a file.
 
@@ -89,13 +93,11 @@ def uploadFile(service,file,parent_id):
     try:
         file_uploaded = service.files().insert(body=file_metadata,media_body=media).execute()
         log('Success: uploaded file %s' % file_uploaded.get('title'))
-        print('uploaded file %s' % file_uploaded.get('title'))
+        print('uploaded file: %s' % file_uploaded.get('title'))
     except errors.HttpError, error:
         log('Upload failed: %s' % error)
         sys.exit('Error: %s' % error)
 
-def logDIR(dir, id):
-    DIR[dir] = id
 
 def createDir(service, dirName, parent_id = None):
     """Creates a directory on google drive and returns its id
@@ -110,7 +112,7 @@ def createDir(service, dirName, parent_id = None):
     try:
         folder = service.files().insert(body=file_metadata,fields='id').execute()
         log('Success: created a directory %s' % dirName)
-        print('created a directory %s' % dirName)
+        print('created directory: %s' % dirName)
         return folder.get('id')
     except errors.HttpError, error:
         log('Directory Creation failed: %s' % error)
@@ -125,8 +127,11 @@ def getDirID(service, dirName):
         return DIR[dirName]
     else:
         head, tail = os.path.split(dirName)
-        parent_id = DIR[head]
-        id = createDir(service, tail, parent_id)
+        if head:
+            parent_id = DIR[head]
+            id = createDir(service, tail, parent_id)
+        else:
+            id = createDir(service, tail)
         logDIR(dirName, id)
         return id
 
@@ -140,6 +145,19 @@ def uploadDir(service,root_dir):
             file_path = dirName+"/"+fname
             uploadFile(service, file_path, id)
 
+def exportDIR():
+    file = open('dir_ids.csv', 'w+')
+    for dir, id in DIR.iteritems():
+        file.write(dir + "," + id + "\n")
+    file.close()
+
+def importDIR():
+    if os.path.isfile('dir_ids.csv'):
+        with open('dir_ids.csv', 'r') as f:
+            reader = csv.reader(f, delimiter=',')
+            for r in reader:
+                DIR[r[0]] = r[1]
+
 def main():
     """Main Function
     """
@@ -148,13 +166,13 @@ def main():
     service = discovery.build('drive', 'v2', http=http)
 
     open_logfile()
+    importDIR()
 
     root_dir = ARGS.root_dir[0][:-1]
-    head, tail = os.path.split(root_dir)
-
-    id = createDir(service, tail)
-    logDIR(tail, id)
+    getDirID(service, root_dir)
     uploadDir(service, "files")
+
+    exportDIR()
 
 if __name__ == '__main__':
     main()

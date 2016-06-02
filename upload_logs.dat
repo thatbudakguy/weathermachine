@@ -89,3 +89,98 @@
 2016-06-02 09:27:54.453335: Success: uploaded file testupload.txt
 2016-06-02 09:27:54.916409: Success: created a directory subdir2
 2016-06-02 09:27:55.973628: Success: uploaded file test_file2.txt
+2016-06-02 12:41:14.132077: Success: created a directory files
+2016-06-02 12:41:14.608792: Success: created a directory images
+2016-06-02 12:41:17.837114: Success: uploaded file batman.jpg
+2016-06-02 12:41:20.797268: Success: uploaded file batman.png
+2016-06-02 12:41:21.294394: Success: created a directory txt_files
+2016-06-02 12:41:22.447325: Success: uploaded file test_file.txt
+2016-06-02 12:41:22.868796: Success: created a directory subdir
+2016-06-02 12:41:23.754693: Success: uploaded file testupload.txt
+2016-06-02 12:41:24.147044: Success: created a directory subdir2
+2016-06-02 12:41:25.067034: Success: uploaded file test_file2.txt
+2016-06-02 12:48:54.223928: Success: created a directory files
+2016-06-02 12:48:55.499564: Success: created a directory images
+2016-06-02 12:49:02.257768: Success: uploaded file batman.jpg
+2016-06-02 12:49:05.953891: Success: uploaded file batman.png
+2016-06-02 12:49:08.146870: Success: created a directory txt_files
+2016-06-02 12:49:10.738787: Success: uploaded file test_file.txt
+2016-06-02 12:49:11.386115: Success: created a directory subdir
+2016-06-02 12:49:12.841455: Success: uploaded file testupload.txt
+2016-06-02 12:49:13.483446: Success: created a directory subdir2
+2016-06-02 12:49:15.121793: Success: uploaded file test_file2.txt
+2016-06-02 12:50:36.198325: Success: created a directory files
+2016-06-02 12:50:38.596127: Success: created a directory images
+2016-06-02 12:50:44.438447: Success: uploaded file batman.jpg
+2016-06-02 12:50:50.707270: Success: uploaded file batman.png
+2016-06-02 12:50:52.247602: Success: created a directory txt_files
+2016-06-02 12:50:54.856689: Success: uploaded file test_file.txt
+2016-06-02 12:50:55.985365: Success: created a directory subdir
+2016-06-02 12:50:58.056831: Success: uploaded file testupload.txt
+2016-06-02 12:50:59.707324: Success: created a directory subdir2
+2016-06-02 12:51:02.160484: Success: uploaded file test_file2.txt
+2016-06-02 12:52:12.333689: Success: created a directory files
+2016-06-02 12:52:12.881051: Success: created a directory images
+2016-06-02 12:52:15.969546: Success: uploaded file batman.jpg
+2016-06-02 12:52:19.267193: Success: uploaded file batman.png
+2016-06-02 12:52:19.749376: Success: created a directory txt_files
+2016-06-02 12:52:20.912246: Success: uploaded file test_file.txt
+2016-06-02 12:52:21.365904: Success: created a directory subdir
+2016-06-02 12:52:22.663219: Success: uploaded file testupload.txt
+2016-06-02 12:52:23.054419: Success: created a directory subdir2
+2016-06-02 12:52:24.091262: Success: uploaded file test_file2.txt
+2016-06-02 12:53:08.844364: Success: created a directory files
+2016-06-02 12:53:09.604315: Success: created a directory images
+2016-06-02 12:53:13.242471: Success: uploaded file batman.jpg
+2016-06-02 12:53:16.212634: Success: uploaded file batman.png
+2016-06-02 12:53:16.691479: Success: created a directory txt_files
+2016-06-02 12:53:17.543352: Success: uploaded file test_file.txt
+2016-06-02 12:53:18.491167: Success: created a directory subdir
+2016-06-02 12:53:20.042433: Success: uploaded file testupload.txt
+2016-06-02 12:53:21.286286: Success: created a directory subdir2
+2016-06-02 12:53:22.817021: Success: uploaded file test_file2.txt
+2016-06-02 12:55:14.271180: Success: created a directory files
+2016-06-02 12:55:15.263001: Success: created a directory images
+2016-06-02 12:55:17.574305: Success: uploaded file batman.jpg
+2016-06-02 12:55:20.006056: Success: uploaded file batman.png
+2016-06-02 12:55:20.743243: Success: created a directory txt_files
+2016-06-02 12:55:22.176080: Success: uploaded file test_file.txt
+2016-06-02 12:55:22.610022: Success: created a directory subdir
+2016-06-02 12:55:23.824147: Success: uploaded file testupload.txt
+2016-06-02 12:55:24.259161: Success: created a directory subdir2
+2016-06-02 12:55:25.515914: Success: uploaded file test_file2.txt
+2016-06-02 13:17:30.522884: Success: created a directory files
+2016-06-02 13:17:30.858301: Success: created a directory images
+2016-06-02 13:17:33.205796: Success: uploaded file batman.jpg
+2016-06-02 13:17:35.314211: Success: uploaded file batman.png
+2016-06-02 13:17:35.657838: Success: created a directory txt_files
+2016-06-02 13:17:36.613956: Success: uploaded file test_file.txt
+2016-06-02 13:17:37.064094: Success: created a directory subdir
+2016-06-02 13:17:37.998432: Success: uploaded file testupload.txt
+2016-06-02 13:17:38.365385: Success: created a directory subdir2
+2016-06-02 13:17:39.442402: Success: uploaded file test_file2.txt
+2016-06-02 13:38:00.208343: Success: created a directory files
+2016-06-02 13:38:02.625151: Success: created a directory images
+2016-06-02 13:40:31.265178: Upload failed: <HttpError 500 when requesting https://www.googleapis.com/upload/drive/v2/files?uploadType=resumable&alt=json returned "Internal Error">
+2016-06-02 13:44:08.008463: Success: created a directory files
+2016-06-02 13:44:44.042540: Success: created a directory images
+2016-06-02 13:45:29.749787: Success: uploaded file batman.jpg
+2016-06-02 13:47:27.347670: Upload failed: <HttpError 500 when requesting https://www.googleapis.com/upload/drive/v2/files?uploadType=resumable&alt=json returned "Internal Error">
+2016-06-02 13:49:17.735026: Success: created a directory files
+2016-06-02 13:49:18.080614: Success: created a directory images
+2016-06-02 13:51:00.038880: Success: created a directory files
+2016-06-02 14:19:29.493694: Success: created a directory files
+2016-06-02 14:19:29.901446: Success: created a directory images
+2016-06-02 14:19:34.459682: Success: uploaded file batman.jpg
+2016-06-02 14:19:38.080297: Success: uploaded file batman.png
+2016-06-02 14:19:38.488426: Success: created a directory txt_files
+2016-06-02 14:19:39.514240: Success: uploaded file test_file.txt
+2016-06-02 14:19:39.855479: Success: created a directory subdir
+2016-06-02 14:19:40.980873: Success: uploaded file testupload.txt
+2016-06-02 14:19:41.385314: Success: created a directory subdir2
+2016-06-02 14:19:42.439999: Success: uploaded file test_file2.txt
+2016-06-02 14:23:04.769254: Success: uploaded file batman.jpg
+2016-06-02 14:23:18.065086: Success: uploaded file batman.png
+2016-06-02 14:23:18.962649: Success: uploaded file test_file.txt
+2016-06-02 14:23:19.755953: Success: uploaded file testupload.txt
+2016-06-02 14:23:20.705612: Success: uploaded file test_file2.txt
