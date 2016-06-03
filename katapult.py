@@ -43,9 +43,9 @@ SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Katapult'
 
-# Dictionary for folder names and ids
+# Dictionaries for folder names and ids, metadata
 DIR = {}
-
+METADATA = {}
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -97,11 +97,9 @@ def readCSV(file):
         input_data = [r for r in reader]
     return input_data
 
-def metadataDictStafford(metadata):
-    output_dict = {}
+def createMetaDict(metadata):
     for line in metadata:
-        title = line[0].replace('.','_')
-        print(title)
+        METADATA[line[0]] = line[1:]
 
 def getFileID(service, fileName, parent_id = None):
     """Checks if a file exists in a given parent directory, if so returns its id
@@ -134,6 +132,10 @@ def uploadFile(service,file,parent_id):
     if not getFileID(service,tail,parent_id):
         media = MediaFileUpload(file,resumable=True)
         file_metadata =  {'title': tail }
+        if METADATA:
+            csv_metadata = METADATA[os.path.splitext(tail)[0]]
+            if csv_metadata:
+                file_metadata['description'] = "Date: " + csv_metadata[0] + "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + csv_metadata[2]
         if parent_id:
             file_metadata['parents'] = [{'id':parent_id}]
         try:
@@ -186,8 +188,9 @@ def uploadDir(service,root_dir):
     for dirName, subdirList, fileList in os.walk(root_dir):
         id = getDirID(service, dirName)
         for fname in fileList:
-            file_path = dirName+"/"+fname
-            uploadFile(service, file_path, id)
+            if not fname.startswith('.'):
+                file_path = dirName+"/"+fname
+                uploadFile(service, file_path, id)
 
 def exportDIR():
     """Exports the DIR dictionary to a csv file
@@ -218,13 +221,18 @@ def main():
     open_logfile()
     importDIR()
 
-    root_dir = ARGS.root_dir[0][:-1]
-    getDirID(service, root_dir)
-    uploadDir(service, "files")
-
     if ARGS.metadata:
-        metadata = readCSV(ARGS.metadata[0])
-        metadataDictStafford(metadata)
+        createMetaDict(readCSV(ARGS.metadata[0]))
+        for key,value in METADATA.items():
+            newkey = key.replace('.','_')
+            METADATA[newkey] = METADATA[key]
+            del METADATA[key]
+
+    root_dir = ARGS.root_dir[0][:-1]
+    head, tail = os.path.split(root_dir)
+    root_id = createDir(service, tail)
+    logDIR(tail, root_id)
+    uploadDir(service, tail)
 
     exportDIR()
 

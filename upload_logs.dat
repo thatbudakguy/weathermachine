@@ -158,3 +158,93 @@
 2016-06-03 10:07:20.146792: Found existing file: test_file2.txt
 2016-06-03 10:07:20.326886: Found existing file: testupload.txt
 2016-06-03 10:07:20.496870: Found existing file: test_file2.txt
+2016-06-03 10:30:51.879797: Found existing file: batman.jpg
+2016-06-03 10:30:52.041727: Found existing file: batman.png
+2016-06-03 10:30:52.395091: Found existing file: test_file.txt
+2016-06-03 10:30:52.569031: Found existing file: test_file2.txt
+2016-06-03 10:30:52.735054: Found existing file: testupload.txt
+2016-06-03 10:30:52.893678: Found existing file: test_file2.txt
+2016-06-03 10:31:07.202764: Found existing file: batman.jpg
+2016-06-03 10:31:07.353402: Found existing file: batman.png
+2016-06-03 10:31:07.521608: Found existing file: test_file.txt
+2016-06-03 10:31:07.682509: Found existing file: test_file2.txt
+2016-06-03 10:31:07.831012: Found existing file: testupload.txt
+2016-06-03 10:31:07.985127: Found existing file: test_file2.txt
+2016-06-03 10:32:00.540233: Found existing file: batman.jpg
+2016-06-03 10:32:00.749664: Found existing file: batman.png
+2016-06-03 10:32:00.944520: Found existing file: test_file.txt
+2016-06-03 10:32:01.123205: Found existing file: test_file2.txt
+2016-06-03 10:32:01.269598: Found existing file: testupload.txt
+2016-06-03 10:32:01.450483: Found existing file: test_file2.txt
+2016-06-03 10:35:32.303055: Found existing file: batman.jpg
+2016-06-03 10:35:32.463368: Found existing file: batman.png
+2016-06-03 10:35:32.639901: Found existing file: test_file.txt
+2016-06-03 10:35:32.797825: Found existing file: test_file2.txt
+2016-06-03 10:35:32.958406: Found existing file: testupload.txt
+2016-06-03 10:35:33.131381: Found existing file: test_file2.txt
+2016-06-03 10:35:58.137641: Found existing file: batman.jpg
+2016-06-03 10:35:58.297338: Found existing file: batman.png
+2016-06-03 10:35:58.471903: Found existing file: test_file.txt
+2016-06-03 10:35:58.633973: Found existing file: test_file2.txt
+2016-06-03 10:35:58.816655: Found existing file: testupload.txt
+2016-06-03 10:35:58.981752: Found existing file: test_file2.txt
+2016-06-03 10:55:35.925141: Success: created a directory files
+2016-06-03 10:58:09.599589: Success: created a directory files
+2016-06-03 10:58:45.082875: Success: created a directory files
+2016-06-03 10:59:21.890364: Success: created a directory files
+2016-06-03 11:05:39.244401: Success: created a directory files
+2016-06-03 11:05:40.929408: Success: uploaded file 1966_1_1_1.jpg
+2016-06-03 11:05:43.047563: Success: uploaded file 1966_1_1_2.jpg
+2016-06-03 11:05:45.384568: Success: uploaded file 1966_1_2_1.jpg
+2016-06-03 11:05:47.046181: Success: uploaded file 1966_1_2_2.jpg
+2016-06-03 11:05:49.011363: Success: uploaded file 1966_1_2_3.jpg
+2016-06-03 11:09:59.800717: Success: created a directory files
+2016-06-03 11:10:01.268199: Success: uploaded file 1966_1_1_1.jpg
+2016-06-03 11:10:02.786269: Success: uploaded file 1966_1_1_2.jpg
+2016-06-03 11:10:04.269921: Success: uploaded file 1966_1_2_1.jpg
+2016-06-03 11:10:05.920607: Success: uploaded file 1966_1_2_2.jpg
+2016-06-03 11:10:07.690827: Success: uploaded file 1966_1_2_3.jpg
+2016-06-03 11:10:09.160371: Success: uploaded file 1966_1_2_4.jpg
+2016-06-03 11:10:10.816111: Success: uploaded file 1966_1_3_1.jpg
+2016-06-03 11:10:12.597634: Success: uploaded file 1966_1_3_2.jpg
+2016-06-03 11:10:14.172366: Success: uploaded file 1966_1_3_3.jpg
+2016-06-03 11:10:15.967358: Success: uploaded file 1966_1_3_4.jpg
+2016-06-03 11:10:17.658008: Success: uploaded file 1966_1_4_1.jpg
+2016-06-03 11:10:19.423033: Success: uploaded file 1966_1_4_2.jpg
+2016-06-03 11:10:21.105767: Success: uploaded file 1966_1_4_3.jpg
+2016-06-03 11:10:22.713044: Success: uploaded file 1966_1_4_4.jpg
+2016-06-03 11:10:24.464647: Success: uploaded file 1966_1_5_1.jpg
+2016-06-03 11:10:25.981823: Success: uploaded file 1966_1_5_2.jpg
+2016-06-03 11:10:27.767053: Success: uploaded file 1966_1_5_3.jpg
+2016-06-03 11:10:29.404051: Success: uploaded file 1966_1_5_4.jpg
+2016-06-03 11:10:31.020933: Success: uploaded file 1966_1_6_1.jpg
+2016-06-03 11:10:32.646148: Success: uploaded file 1966_1_6_2.jpg
+2016-06-03 11:10:34.001074: Success: uploaded file 1966_1_6_3.jpg
+2016-06-03 11:14:23.965141: Success: created a directory Stafford Negatives
+2016-06-03 11:15:56.227638: Success: created a directory Stafford Negatives
+2016-06-03 11:16:10.892723: Success: created a directory Stafford Negatives
+2016-06-03 11:16:45.867299: Success: created a directory Stafford Negatives
+2016-06-03 11:17:07.095700: Success: created a directory Stafford Negatives
+2016-06-03 11:17:08.790737: Success: uploaded file 1966_1_1_1.jpg
+2016-06-03 11:17:10.188215: Success: uploaded file 1966_1_1_2.jpg
+2016-06-03 11:17:11.910760: Success: uploaded file 1966_1_2_1.jpg
+2016-06-03 11:17:40.918827: Success: created a directory Stafford Negatives
+2016-06-03 11:17:42.441307: Success: uploaded file 1966_1_1_1.jpg
+2016-06-03 11:17:43.857726: Success: uploaded file 1966_1_1_2.jpg
+2016-06-03 11:17:45.346252: Success: uploaded file 1966_1_2_1.jpg
+2016-06-03 11:17:46.962565: Success: uploaded file 1966_1_2_2.jpg
+2016-06-03 11:17:48.498637: Success: uploaded file 1966_1_2_3.jpg
+2016-06-03 11:17:50.286016: Success: uploaded file 1966_1_2_4.jpg
+2016-06-03 11:17:51.818279: Success: uploaded file 1966_1_3_1.jpg
+2016-06-03 11:17:53.708597: Success: uploaded file 1966_1_3_2.jpg
+2016-06-03 11:17:55.416885: Success: uploaded file 1966_1_3_3.jpg
+2016-06-03 11:19:11.332721: Success: created a directory Stafford Negatives
+2016-06-03 11:19:12.950931: Success: uploaded file 1966_1_1_1.jpg
+2016-06-03 11:19:14.594579: Success: uploaded file 1966_1_1_2.jpg
+2016-06-03 11:19:16.334789: Success: uploaded file 1966_1_2_1.jpg
+2016-06-03 11:19:17.765170: Success: uploaded file 1966_1_2_2.jpg
+2016-06-03 11:19:19.298234: Success: uploaded file 1966_1_2_3.jpg
+2016-06-03 11:19:20.794730: Success: uploaded file 1966_1_2_4.jpg
+2016-06-03 11:19:22.432996: Success: uploaded file 1966_1_3_1.jpg
+2016-06-03 11:19:23.992687: Success: uploaded file 1966_1_3_2.jpg
+2016-06-03 11:19:25.523674: Success: uploaded file 1966_1_3_3.jpg
