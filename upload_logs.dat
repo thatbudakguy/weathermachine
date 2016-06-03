@@ -80,3 +80,21 @@
 2016-06-02 17:02:47.618871: Found existing file: test_file2.txt
 2016-06-02 17:02:47.812659: Found existing file: testupload.txt
 2016-06-02 17:02:47.976995: Found existing file: test_file2.txt
+2016-06-03 09:12:06.496203: Success: created a directory files
+2016-06-03 09:12:07.011594: Success: created a directory images
+2016-06-03 09:12:10.819502: Success: uploaded file batman.jpg
+2016-06-03 09:12:14.026428: Success: uploaded file batman.png
+2016-06-03 09:12:14.394989: Success: created a directory txt_files
+2016-06-03 09:12:16.683869: Success: uploaded file test_file.txt
+2016-06-03 09:12:17.916277: Success: uploaded file test_file2.txt
+2016-06-03 09:12:18.396093: Success: created a directory subdir
+2016-06-03 09:12:19.680447: Success: uploaded file testupload.txt
+2016-06-03 09:12:20.904791: Success: created a directory subdir2
+2016-06-03 09:12:24.057892: Success: uploaded file test_file2.txt
+2016-06-03 09:13:15.676353: Found existing file: batman.jpg
+2016-06-03 09:13:15.852718: Found existing file: batman.png
+2016-06-03 09:13:16.036223: Found existing file: test_file.txt
+2016-06-03 09:13:16.210042: Found existing file: test_file2.txt
+2016-06-03 09:13:17.429966: Success: uploaded file test_file3.txt
+2016-06-03 09:13:17.666864: Found existing file: testupload.txt
+2016-06-03 09:13:17.831332: Found existing file: test_file2.txt
