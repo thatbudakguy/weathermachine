@@ -13,10 +13,15 @@ import oauth2client
 from oauth2client import client
 from oauth2client import tools
 
+""" CLI Argument Setup
+
+"""
+
 try:
     import argparse
     flags = argparse.ArgumentParser(parents=[tools.argparser],description='Upload files to Google Drive archive.')
-    flags.add_argument('-r','--root_dir',type=str,nargs=1,required=True,help='The directory containing all files to be uploaded.')
+    flags.add_argument('-r','--root_dir',type=str,nargs=1,required=True,help='Root directory containing all files to be uploaded.')
+    flags.add_argument('-m','--metadata',type=str,nargs=1,required=False,help='Comma-separated file of metadata to apply to uploaded files.')
     ARGS = flags.parse_args()
 except ImportError:
     flags = None
@@ -81,6 +86,23 @@ def log(msg):
 def logDIR(dir, id):
     DIR[dir] = id
 
+def readCSV(file):
+    input_data = []
+    if '/' in file:
+        sys.exit("Input file must be in same directory as script.")
+    if file[-4:] != '.csv':
+        sys.exit("Input file must be in .csv format.")
+    with open(file, 'rU') as f:
+        reader = csv.reader(f, delimiter=',')
+        input_data = [r for r in reader]
+    return input_data
+
+def metadataDictStafford(metadata):
+    output_dict = {}
+    for line in metadata:
+        title = line[0].replace('.','_')
+        print(title)
+
 def getFileID(service, fileName, parent_id = None):
     """Checks if a file exists in a given parent directory, if so returns its id
 
@@ -141,7 +163,6 @@ def createDir(service, dirName, parent_id = None):
         log('Directory Creation failed: %s' % error)
         sys.exit('Error: %s' % error)
 
-
 def getDirID(service, dirName):
     """Checks if a directory id exists, if not creates a directory and returns its id
 
@@ -182,10 +203,9 @@ def importDIR():
 
     """
     if os.path.isfile('dir_ids.csv'):
-        with open('dir_ids.csv', 'r') as f:
-            reader = csv.reader(f, delimiter=',')
-            for r in reader:
-                DIR[r[0]] = r[1]
+        dir_csv = readCSV('dir_ids.csv')
+        for r in dir_csv:
+            DIR[r[0]] = r[1]
 
 def main():
     """Main Function
@@ -201,6 +221,10 @@ def main():
     root_dir = ARGS.root_dir[0][:-1]
     getDirID(service, root_dir)
     uploadDir(service, "files")
+
+    if ARGS.metadata:
+        metadata = readCSV(ARGS.metadata[0])
+        metadataDictStafford(metadata)
 
     exportDIR()
 
