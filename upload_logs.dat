@@ -50,3 +50,33 @@
 2016-06-02 15:44:27.780012: Success: uploaded file test_file2.txt
 2016-06-02 15:44:28.679752: Success: uploaded file testupload.txt
 2016-06-02 15:44:29.559087: Success: uploaded file test_file2.txt
+2016-06-02 16:54:55.011791: Success: created a directory files
+2016-06-02 16:54:55.335209: Success: created a directory images
+2016-06-02 16:54:57.658013: Success: uploaded file batman.jpg
+2016-06-02 16:55:00.314537: Success: uploaded file batman.png
+2016-06-02 16:55:00.676620: Success: created a directory txt_files
+2016-06-02 16:55:01.669087: Success: uploaded file test_file.txt
+2016-06-02 16:55:03.108894: Success: uploaded file test_file2.txt
+2016-06-02 16:55:03.432612: Success: created a directory subdir
+2016-06-02 16:55:04.275792: Success: uploaded file testupload.txt
+2016-06-02 16:55:04.635012: Success: created a directory subdir2
+2016-06-02 16:55:05.745608: Success: uploaded file test_file2.txt
+2016-06-02 16:55:20.578817: Success: uploaded file batman.jpg
+2016-06-02 16:55:22.410212: Success: uploaded file batman.png
+2016-06-02 16:55:23.448745: Success: uploaded file test_file.txt
+2016-06-02 16:55:24.432149: Success: uploaded file test_file2.txt
+2016-06-02 16:55:25.401496: Success: uploaded file testupload.txt
+2016-06-02 16:55:26.498213: Success: uploaded file test_file2.txt
+2016-06-02 16:58:12.382958: Success: uploaded file batman.jpg
+2016-06-02 16:58:14.704162: Success: uploaded file batman.png
+2016-06-02 16:58:15.691604: Success: uploaded file test_file.txt
+2016-06-02 16:58:16.768474: Success: uploaded file test_file2.txt
+2016-06-02 16:59:45.459235: Success: uploaded file batman.jpg
+2016-06-02 17:01:19.220159: Success: uploaded file batman.jpg
+2016-06-02 17:01:21.335118: Success: uploaded file batman.png
+2016-06-02 17:02:47.084635: Found existing file: batman.jpg
+2016-06-02 17:02:47.268553: Found existing file: batman.png
+2016-06-02 17:02:47.444323: Found existing file: test_file.txt
+2016-06-02 17:02:47.618871: Found existing file: test_file2.txt
+2016-06-02 17:02:47.812659: Found existing file: testupload.txt
+2016-06-02 17:02:47.976995: Found existing file: test_file2.txt

@@ -81,23 +81,46 @@ def log(msg):
 def logDIR(dir, id):
     DIR[dir] = id
 
-def uploadFile(service,file,parent_id):
-    """Uploads a file.
+def getFileID(service, fileName, parent_id = None):
+    """Checks if a file exists in a given parent directory, if so returns its id
 
     """
-    media = MediaFileUpload(file,resumable=True)
-    head, tail = os.path.split(file)
-    file_metadata =  {'title': tail }
-    if parent_id:
-        file_metadata['parents'] = [{'id':parent_id}]
-    try:
-        file_uploaded = service.files().insert(body=file_metadata,media_body=media).execute()
-        log('Success: uploaded file %s' % file_uploaded.get('title'))
-        print('uploaded file: %s' % file_uploaded.get('title'))
-    except errors.HttpError, error:
-        log('Upload failed: %s' % error)
-        sys.exit('Error: %s' % error)
+    page_token = None
+    while True:
+        try:
+            param = {}
+            if page_token:
+                param['pageToken'] = page_token
+            children = service.files().list(q="'%s' in parents" % parent_id, **param).execute()
+            for child in children.get('items',[]):
+                if child['title'] == fileName:
+                    log('Found existing file: %s' % child['title'])
+                    return(child['id'])
+            page_token = children.get('nextPageToken')
+            if not page_token:
+                return None
+        except errors.HttpError, error:
+            log('An error occurred: %s' % error)
+            break
+    return None
 
+def uploadFile(service,file,parent_id):
+    """Uploads a file if it does not yet exist.
+
+    """
+    head, tail = os.path.split(file)
+    if not getFileID(service,tail,parent_id):
+        media = MediaFileUpload(file,resumable=True)
+        file_metadata =  {'title': tail }
+        if parent_id:
+            file_metadata['parents'] = [{'id':parent_id}]
+        try:
+            file_uploaded = service.files().insert(body=file_metadata,media_body=media).execute()
+            log('Success: uploaded file %s' % file_uploaded.get('title'))
+            print('uploaded file: %s' % file_uploaded.get('title'))
+        except errors.HttpError, error:
+            log('Upload failed: %s' % error)
+            sys.exit('Error: %s' % error)
 
 def createDir(service, dirName, parent_id = None):
     """Creates a directory on google drive and returns its id
