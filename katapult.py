@@ -88,14 +88,19 @@ def logDIR(dir, id):
 
 def readCSV(file):
     input_data = []
-    if '/' in file:
-        sys.exit("Input file must be in same directory as script.")
     if file[-4:] != '.csv':
         sys.exit("Input file must be in .csv format.")
     with open(file, 'rU') as f:
         reader = csv.reader(f, delimiter=',')
         input_data = [r for r in reader]
     return input_data
+
+def cleanCSV(rows):
+    for r in rows:
+        if r[0] == '' or len(r) <= 1:
+            print(r)
+            rows.remove(r)
+    return rows
 
 def createMetaDict(metadata):
     for line in metadata:
@@ -221,8 +226,10 @@ def main():
     open_logfile()
     importDIR()
 
-    if ARGS.metadata:
-        createMetaDict(readCSV(ARGS.metadata[0]))
+    if ARGS.metadata[0]:
+        test = cleanCSV(readCSV(ARGS.metadata[0]))
+        sys.exit()
+        createMetaDict(cleanCSV(readCSV(ARGS.metadata[0])))
         for key,value in METADATA.items():
             newkey = key.replace('.','_')
             METADATA[newkey] = METADATA[key]
