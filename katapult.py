@@ -258,11 +258,9 @@ def main():
             del METADATA[key]
 
     root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
-    print(ARGS.root_dir[0])
-    print(root_dir)
     root_id = create_dir(service, root_dir)
     log_dir(root_dir, root_id)
-    upload_dir(service, ARGS.root_dir[0])
+    upload_dir(service, root_dir)
 
     export_dir()
 
