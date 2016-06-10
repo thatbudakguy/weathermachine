@@ -119,7 +119,6 @@ def clean_csv(rows):
     """
     for row in rows:
         if row[0] == '' or len(row) <= 1:
-            print(row)
             rows.remove(row)
     return rows
 
@@ -132,8 +131,9 @@ def create_meta_dict(metadata):
         METADATA[line[0]] = line[1:]
 
 def get_file_id(service, file_name, parent_id=None):
-    """Checks if a file exists in a given parent directory, if so returns its id
-
+    """Checks if a file exists in a given parent directory.
+    Returns:
+        the id of the file or None
     """
     page_token = None
     while True:
@@ -252,15 +252,17 @@ def main():
 
     if ARGS.metadata[0]:
         create_meta_dict(clean_csv(read_csv(ARGS.metadata[0])))
-        for key in METADATA.items():
+        for key, value in METADATA.items():
             newkey = key.replace('.', '_')
             METADATA[newkey] = METADATA[key]
             del METADATA[key]
 
     root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
+    print(ARGS.root_dir[0])
+    print(root_dir)
     root_id = create_dir(service, root_dir)
     log_dir(root_dir, root_id)
-    upload_dir(service, root_dir)
+    upload_dir(service, ARGS.root_dir[0])
 
     export_dir()
 
