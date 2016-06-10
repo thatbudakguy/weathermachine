@@ -163,9 +163,12 @@ def upload_file(service, input_file, parent_id):
         media = MediaFileUpload(input_file, resumable=True)
         file_metadata = {'title': file_name}
         if METADATA:
-            csv_metadata = METADATA[os.path.splitext(file_name)[0]]
-            if csv_metadata:
+            try:
+                csv_metadata = METADATA[os.path.splitext(file_name)[0]]
                 file_metadata['description'] = "Date: " + csv_metadata[0] + "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + csv_metadata[2]
+            except KeyError:
+                log("Didn't find metadata for file %s, uploading anyway" % file_name)
+                print("Didn't find metadata for file %s, uploading anyway" % file_name)
         if parent_id:
             file_metadata['parents'] = [{'id':parent_id}]
         try:
@@ -250,6 +253,8 @@ def main():
     service = discovery.build('drive', 'v2', http=http)
 
     import_dir()
+
+    log("Authentication success, beginning upload using root %s" % ARGS.root_dir)
 
     if ARGS.metadata[0]:
         create_meta_dict(clean_csv(read_csv(ARGS.metadata[0])))
