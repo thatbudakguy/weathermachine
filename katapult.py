@@ -211,15 +211,16 @@ def get_dir_id(service, dir_name):
         log_dir(dir_name, dir_id)
         return dir_id
 
-def upload_dir(service, root_dir):
+def upload_dir(service, root_dir_name, root_dir_path):
     """Traverse through a given root_directory
 
     """
-    for dir_name, sub_dir_list, file_list in os.walk(root_dir):
+    for dir_path, sub_dir_list, file_list in os.walk(root_dir_path):
+        dir_name = os.path.split(dir_path[:-1])[1]
         dir_id = get_dir_id(service, dir_name)
         for fname in file_list:
             if not fname.startswith('.'):
-                file_path = dir_name+"/"+fname
+                file_path = dir_path+"/"+fname
                 upload_file(service, file_path, dir_id)
 
 def export_dir():
@@ -260,7 +261,7 @@ def main():
     root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
     root_id = create_dir(service, root_dir)
     log_dir(root_dir, root_id)
-    upload_dir(service, root_dir)
+    upload_dir(service, root_dir, ARGS.root_dir[0])
 
     export_dir()
 
