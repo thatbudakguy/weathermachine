@@ -53,9 +53,11 @@ SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Katapult'
 
-# Dictionaries for folder names and ids, metadata
+# Dictionaries for folder names and ids, metadata, uploaded files
 DIR = {}
 METADATA = {}
+TOTALFILES = 0.0
+UPLOADEDFILES = 0.0
 
 # Load the logfile
 LOG_FILE = open('upload_logs.dat', 'a')
@@ -158,7 +160,13 @@ def upload_file(service, input_file, parent_id):
     """Uploads a file if it does not yet exist.
 
     """
+    global UPLOADEDFILES
     file_name = os.path.split(input_file)[1]
+    # fix an issue with "0X" for months prior to October
+    split = file_name.split("_")
+    split[1] = "0" + split[1]
+    month_name = "_".join(split)
+    # do the upload
     if not get_file_id(service, file_name, parent_id):
         media = MediaFileUpload(input_file, resumable=True)
         file_metadata = {'title': file_name}
@@ -167,14 +175,25 @@ def upload_file(service, input_file, parent_id):
                 csv_metadata = METADATA[os.path.splitext(file_name)[0]]
                 file_metadata['description'] = "Date: " + csv_metadata[0] + "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + csv_metadata[2]
             except KeyError:
-                log("Didn't find metadata for file %s, uploading anyway" % file_name)
-                print("Didn't find metadata for file %s, uploading anyway" % file_name)
+                try:
+                    csv_metadata = METADATA[os.path.splitext(month_name)[0]]
+                    file_metadata['description'] = "Date: " + csv_metadata[0] + "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + csv_metadata[2]
+                except KeyError:
+                    log("Didn't find metadata for file %s, uploading anyway" % file_name)
+                    print("Didn't find metadata for file %s, uploading anyway" % file_name)
         if parent_id:
             file_metadata['parents'] = [{'id':parent_id}]
         try:
             file_uploaded = service.files().insert(body=file_metadata, media_body=media).execute()
+            # print('Uploaded file: %s' % file_uploaded.get('title'))
+            UPLOADEDFILES += 1.0
+            progress = str(round(((UPLOADEDFILES/TOTALFILES)*100), 4)) + " % processed"
+            sys.stdout.write("\r")
+            sys.stdout.write(progress)
+            sys.stdout.write("\t")
+            sys.stdout.write('Uploaded file: %s' % file_uploaded.get('title'))
+            sys.stdout.flush()
             log('Success: uploaded file %s' % file_uploaded.get('title'))
-            print('uploaded file: %s' % file_uploaded.get('title'))
         except errors.HttpError, error:
             log('Upload failed: %s' % error)
             sys.exit('Error: %s' % error)
@@ -215,9 +234,7 @@ def get_dir_id(service, dir_name):
         return dir_id
 
 def upload_dir(service, root_dir_name, root_dir_path):
-    """Traverse through a given root_directory
-
-    """
+    """Traverse through a given root_directory"""
     for dir_path, sub_dir_list, file_list in os.walk(root_dir_path):
         dir_name = os.path.split(dir_path[:-1])[1]
         dir_id = get_dir_id(service, dir_name)
@@ -225,6 +242,16 @@ def upload_dir(service, root_dir_name, root_dir_path):
             if not fname.startswith('.'):
                 file_path = dir_path+"/"+fname
                 upload_file(service, file_path, dir_id)
+
+def upload_progress(root_dir_path):
+    """Traverse through a given root_directory and count the number of files
+    to upload
+    """
+    global TOTALFILES
+    for dir_path, sub_dir_list, file_list in os.walk(root_dir_path):
+        for fname in file_list:
+            if not fname.startswith('.'):
+                TOTALFILES += 1.0
 
 def export_dir():
     """Exports the DIR dictionary to a csv file
@@ -254,7 +281,7 @@ def main():
 
     import_dir()
 
-    log("Authentication success, beginning upload using root %s" % ARGS.root_dir)
+    log("Authentication success, beginning upload using root %s" % ARGS.root_dir[0])
 
     if ARGS.metadata[0]:
         create_meta_dict(clean_csv(read_csv(ARGS.metadata[0])))
@@ -266,6 +293,7 @@ def main():
     root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
     root_id = create_dir(service, root_dir)
     log_dir(root_dir, root_id)
+    upload_progress(ARGS.root_dir[0])
     upload_dir(service, root_dir, ARGS.root_dir[0])
 
     export_dir()
