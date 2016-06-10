@@ -1,10 +1,13 @@
+""" katapult.py - an application to 'throw' archival material into the cloud """
+
 from __future__ import print_function
-import httplib2
 import os
 import json
 import datetime
 import sys
 import csv
+import argparse
+import httplib2
 
 from apiclient import discovery
 from apiclient.http import MediaFileUpload
@@ -13,29 +16,36 @@ import oauth2client
 from oauth2client import client
 from oauth2client import tools
 
-""" CLI Argument Setup
-
-"""
-
-try:
-    import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser],description='Upload files to Google Drive archive.')
-    flags.add_argument('-r','--root_dir',type=str,nargs=1,required=True,help='Root directory containing all files to be uploaded.')
-    flags.add_argument('-m','--metadata',type=str,nargs=1,required=False,help='Comma-separated file of metadata to apply to uploaded files.')
-    ARGS = flags.parse_args()
-except ImportError:
-    flags = None
+# Setup the command-line options
+FLAGS = argparse.ArgumentParser(
+    parents=[tools.argparser],
+    description='Upload files to Google Drive archive.')
+FLAGS.add_argument(
+    '-r',
+    '--root_dir',
+    type=str,
+    nargs=1,
+    required=True,
+    help='Root directory containing all files to be uploaded.')
+FLAGS.add_argument(
+    '-m',
+    '--metadata',
+    type=str,
+    nargs=1,
+    required=False,
+    help='Comma-separated file of metadata to apply to uploaded files.')
+ARGS = FLAGS.parse_args()
 
 # Populate the CLIENT_SECRET_FILE using non-sensitive data from auth.json
 # and with sensitive data taken from environment variables
 with open('auth.json', 'r') as auth:
-    json_string = auth.read()
-parsed_json = json.loads(json_string)
-parsed_json['installed']['client_id'] = os.environ.get('KATAPULT_CLIENT_ID')
-parsed_json['installed']['client_secret'] = os.environ.get('KATAPULT_CLIENT_SECRET')
-secret_json_string = json.dumps(parsed_json, sort_keys=True, separators=(',',':'))
+    JSON_STRING = auth.read()
+PARSED_JSON = json.loads(JSON_STRING)
+PARSED_JSON['installed']['client_id'] = os.environ.get('KATAPULT_CLIENT_ID')
+PARSED_JSON['installed']['client_secret'] = os.environ.get('KATAPULT_CLIENT_SECRET')
+SECRET_JSON_STRING = json.dumps(PARSED_JSON, sort_keys=True, separators=(',', ':'))
 with open('secret.json', 'w') as secret:
-    secret.write(secret_json_string)
+    secret.write(SECRET_JSON_STRING)
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/drive-python-quickstart.json
@@ -46,6 +56,9 @@ APPLICATION_NAME = 'Katapult'
 # Dictionaries for folder names and ids, metadata
 DIR = {}
 METADATA = {}
+
+# Load the logfile
+LOG_FILE = open('upload_logs.dat', 'a')
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -68,47 +81,59 @@ def get_credentials():
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        if flags:
+        if FLAGS:
             credentials = tools.run_flow(flow, store, ARGS)
         else: # Needed only for compatibility with Python 2.6
             credentials = tools.run(flow, store)
         print('Storing credentials to ' + credential_path)
     return credentials
 
-def open_logfile():
-    global LOG_FILE
-    LOG_FILE = open('upload_logs.dat', 'a')
-
 def log(msg):
+    """Logs a timestamp and a message to the logfile."""
     stamp = datetime.datetime.now()
     LOG_FILE.write((str(stamp) + ': ' + msg + '\n').encode('utf8'))
 
-def logDIR(dir, id):
-    DIR[dir] = id
+def log_dir(dir_name, dir_id):
+    """Logs a created directory and its id to the DIR registry file."""
+    DIR[dir_name] = dir_id
 
-def readCSV(file):
+def read_csv(input_file):
+    """Reads a .csv format file.
+    Returns:
+        input_data, the csv data as a list of lines.
+    """
     input_data = []
-    if file[-4:] != '.csv':
+    if input_file[-4:] != '.csv':
         sys.exit("Input file must be in .csv format.")
-    with open(file, 'rU') as f:
-        reader = csv.reader(f, delimiter=',')
+    with open(input_file, 'rU') as file_contents:
+        reader = csv.reader(file_contents, delimiter=',')
         input_data = [r for r in reader]
     return input_data
 
-def cleanCSV(rows):
-    for r in rows:
-        if r[0] == '' or len(r) <= 1:
-            print(r)
-            rows.remove(r)
+def clean_csv(rows):
+    """Takes a list of lines from read_csv() and removes lines that:
+        - have less than two elements
+        - begin with an empty element
+    Returns:
+        rows, a list of lines in the same format as the input
+    """
+    for row in rows:
+        if row[0] == '' or len(row) <= 1:
+            rows.remove(row)
     return rows
 
-def createMetaDict(metadata):
+def create_meta_dict(metadata):
+    """Takes a list of lines from read_csv() or clean_csv() and creates a dict,
+    using the first element of a line as a key and all following elements of
+    the line as the corresponding value.
+    """
     for line in metadata:
         METADATA[line[0]] = line[1:]
 
-def getFileID(service, fileName, parent_id = None):
-    """Checks if a file exists in a given parent directory, if so returns its id
-
+def get_file_id(service, file_name, parent_id=None):
+    """Checks if a file exists in a given parent directory.
+    Returns:
+        the id of the file or None
     """
     page_token = None
     while True:
@@ -117,10 +142,10 @@ def getFileID(service, fileName, parent_id = None):
             if page_token:
                 param['pageToken'] = page_token
             children = service.files().list(q="'%s' in parents" % parent_id, **param).execute()
-            for child in children.get('items',[]):
-                if child['title'] == fileName:
+            for child in children.get('items', []):
+                if child['title'] == file_name:
                     log('Found existing file: %s' % child['title'])
-                    return(child['id'])
+                    return child['id']
             page_token = children.get('nextPageToken')
             if not page_token:
                 return None
@@ -129,91 +154,92 @@ def getFileID(service, fileName, parent_id = None):
             break
     return None
 
-def uploadFile(service,file,parent_id):
+def upload_file(service, input_file, parent_id):
     """Uploads a file if it does not yet exist.
 
     """
-    head, tail = os.path.split(file)
-    if not getFileID(service,tail,parent_id):
-        media = MediaFileUpload(file,resumable=True)
-        file_metadata =  {'title': tail }
+    file_name = os.path.split(input_file)[1]
+    if not get_file_id(service, file_name, parent_id):
+        media = MediaFileUpload(input_file, resumable=True)
+        file_metadata = {'title': file_name}
         if METADATA:
-            csv_metadata = METADATA[os.path.splitext(tail)[0]]
+            csv_metadata = METADATA[os.path.splitext(file_name)[0]]
             if csv_metadata:
                 file_metadata['description'] = "Date: " + csv_metadata[0] + "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + csv_metadata[2]
         if parent_id:
             file_metadata['parents'] = [{'id':parent_id}]
         try:
-            file_uploaded = service.files().insert(body=file_metadata,media_body=media).execute()
+            file_uploaded = service.files().insert(body=file_metadata, media_body=media).execute()
             log('Success: uploaded file %s' % file_uploaded.get('title'))
             print('uploaded file: %s' % file_uploaded.get('title'))
         except errors.HttpError, error:
             log('Upload failed: %s' % error)
             sys.exit('Error: %s' % error)
 
-def createDir(service, dirName, parent_id = None):
+def create_dir(service, dir_name, parent_id=None):
     """Creates a directory on google drive and returns its id
 
     """
     file_metadata = {
-        'title' : dirName,
+        'title' : dir_name,
         'mimeType' : 'application/vnd.google-apps.folder'
     }
     if parent_id:
         file_metadata['parents'] = [{'id':parent_id}]
     try:
-        folder = service.files().insert(body=file_metadata,fields='id').execute()
-        log('Success: created a directory %s' % dirName)
-        print('created directory: %s' % dirName)
+        folder = service.files().insert(body=file_metadata, fields='id').execute()
+        log('Success: created a directory %s' % dir_name)
+        print('created directory: %s' % dir_name)
         return folder.get('id')
     except errors.HttpError, error:
         log('Directory Creation failed: %s' % error)
         sys.exit('Error: %s' % error)
 
-def getDirID(service, dirName):
+def get_dir_id(service, dir_name):
     """Checks if a directory id exists, if not creates a directory and returns its id
 
     """
-    if dirName in DIR:
-        return DIR[dirName]
+    if dir_name in DIR:
+        return DIR[dir_name]
     else:
-        head, tail = os.path.split(dirName)
+        head, tail = os.path.split(dir_name)
         if head:
             parent_id = DIR[head]
-            id = createDir(service, tail, parent_id)
+            dir_id = create_dir(service, tail, parent_id)
         else:
-            id = createDir(service, tail)
-        logDIR(dirName, id)
-        return id
+            dir_id = create_dir(service, tail)
+        log_dir(dir_name, dir_id)
+        return dir_id
 
-def uploadDir(service,root_dir):
+def upload_dir(service, root_dir_name, root_dir_path):
     """Traverse through a given root_directory
 
     """
-    for dirName, subdirList, fileList in os.walk(root_dir):
-        id = getDirID(service, dirName)
-        for fname in fileList:
+    for dir_path, sub_dir_list, file_list in os.walk(root_dir_path):
+        dir_name = os.path.split(dir_path[:-1])[1]
+        dir_id = get_dir_id(service, dir_name)
+        for fname in file_list:
             if not fname.startswith('.'):
-                file_path = dirName+"/"+fname
-                uploadFile(service, file_path, id)
+                file_path = dir_path+"/"+fname
+                upload_file(service, file_path, dir_id)
 
-def exportDIR():
+def export_dir():
     """Exports the DIR dictionary to a csv file
 
     """
-    file = open('dir_ids.csv', 'w')
-    for dir, id in DIR.iteritems():
-        file.write(dir + "," + id + "\n")
-    file.close()
+    dir_file = open('dir_ids.csv', 'w')
+    for dir_name, dir_id in DIR.iteritems():
+        dir_file.write(dir_name + "," + dir_id + "\n")
+    dir_file.close()
 
-def importDIR():
+def import_dir():
     """Imports the DIR dictionary from a csv file, if any
 
     """
     if os.path.isfile('dir_ids.csv'):
-        dir_csv = readCSV('dir_ids.csv')
-        for r in dir_csv:
-            DIR[r[0]] = r[1]
+        dir_csv = read_csv('dir_ids.csv')
+        for line in dir_csv:
+            DIR[line[0]] = line[1]
 
 def main():
     """Main Function
@@ -223,25 +249,21 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
 
-    open_logfile()
-    importDIR()
+    import_dir()
 
     if ARGS.metadata[0]:
-        test = cleanCSV(readCSV(ARGS.metadata[0]))
-        sys.exit()
-        createMetaDict(cleanCSV(readCSV(ARGS.metadata[0])))
-        for key,value in METADATA.items():
-            newkey = key.replace('.','_')
+        create_meta_dict(clean_csv(read_csv(ARGS.metadata[0])))
+        for key, value in METADATA.items():
+            newkey = key.replace('.', '_')
             METADATA[newkey] = METADATA[key]
             del METADATA[key]
 
-    root_dir = ARGS.root_dir[0][:-1]
-    head, tail = os.path.split(root_dir)
-    root_id = createDir(service, tail)
-    logDIR(tail, root_id)
-    uploadDir(service, tail)
+    root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
+    root_id = create_dir(service, root_dir)
+    log_dir(root_dir, root_id)
+    upload_dir(service, root_dir, ARGS.root_dir[0])
 
-    exportDIR()
+    export_dir()
 
 if __name__ == '__main__':
     main()
