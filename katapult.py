@@ -164,7 +164,8 @@ def upload_file(service, input_file, parent_id):
     file_name = os.path.split(input_file)[1]
     # fix an issue with "0X" for months prior to October
     split = file_name.split("_")
-    split[1] = "0" + split[1]
+    if len(split[1]) == 2 and split[1][0] == "0":
+        split[1] = split[1][1:]
     month_name = "_".join(split)
     # do the upload
     if not get_file_id(service, file_name, parent_id):
@@ -291,7 +292,7 @@ def main():
             del METADATA[key]
 
     root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
-    root_id = create_dir(service, root_dir)
+    root_id = get_dir_id(service, root_dir)
     log_dir(root_dir, root_id)
     upload_progress(ARGS.root_dir[0])
     upload_dir(service, root_dir, ARGS.root_dir[0])
