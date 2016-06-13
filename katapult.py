@@ -4,9 +4,11 @@ from __future__ import print_function
 import os
 import json
 import datetime
+import time
 import sys
 import csv
 import argparse
+import socket
 import httplib2
 
 from apiclient import discovery
@@ -156,18 +158,37 @@ def get_file_id(service, file_name, parent_id=None):
             break
     return None
 
+def do_file_upload(service, file_metadata, media):
+    """Uses the API to do the file upload, handling errors."""
+    global UPLOADEDFILES
+    try:
+        file_uploaded = service.files().insert(body=file_metadata, media_body=media).execute()
+        UPLOADEDFILES += 1.0
+        progress = str(round(((UPLOADEDFILES/TOTALFILES)*100), 4)) + " % processed"
+        sys.stdout.write("\r")
+        sys.stdout.write(progress)
+        sys.stdout.write("\t")
+        sys.stdout.write('Uploaded file: %s' % file_uploaded.get('title'))
+        sys.stdout.flush()
+        log('Success: uploaded file %s' % file_uploaded.get('title'))
+    except errors.HttpError, error:
+        log('Upload failed: %s' % error)
+        sys.exit('Error: %s' % error)
+    except socket.error:
+        log('Caught socket error %s, retrying file %s in 5 seconds' % (error, file_uploaded.get('title')))
+        time.sleep(5)
+        do_file_upload(service, file_metadata, media)
+
 def upload_file(service, input_file, parent_id):
     """Uploads a file if it does not yet exist.
 
     """
-    global UPLOADEDFILES
     file_name = os.path.split(input_file)[1]
     # fix an issue with "0X" for months prior to October
     split = file_name.split("_")
     if len(split[1]) == 2 and split[1][0] == "0":
         split[1] = split[1][1:]
     month_name = "_".join(split)
-    # do the upload
     if not get_file_id(service, file_name, parent_id):
         media = MediaFileUpload(input_file, resumable=True)
         file_metadata = {'title': file_name}
@@ -184,20 +205,8 @@ def upload_file(service, input_file, parent_id):
                     print("Didn't find metadata for file %s, uploading anyway" % file_name)
         if parent_id:
             file_metadata['parents'] = [{'id':parent_id}]
-        try:
-            file_uploaded = service.files().insert(body=file_metadata, media_body=media).execute()
-            # print('Uploaded file: %s' % file_uploaded.get('title'))
-            UPLOADEDFILES += 1.0
-            progress = str(round(((UPLOADEDFILES/TOTALFILES)*100), 4)) + " % processed"
-            sys.stdout.write("\r")
-            sys.stdout.write(progress)
-            sys.stdout.write("\t")
-            sys.stdout.write('Uploaded file: %s' % file_uploaded.get('title'))
-            sys.stdout.flush()
-            log('Success: uploaded file %s' % file_uploaded.get('title'))
-        except errors.HttpError, error:
-            log('Upload failed: %s' % error)
-            sys.exit('Error: %s' % error)
+        # do the upload
+        do_file_upload(service, file_metadata, media)
 
 def create_dir(service, dir_name, parent_id=None):
     """Creates a directory on google drive and returns its id
@@ -217,6 +226,8 @@ def create_dir(service, dir_name, parent_id=None):
     except errors.HttpError, error:
         log('Directory Creation failed: %s' % error)
         sys.exit('Error: %s' % error)
+    except socket.error:
+        log('Caught socket error %s, retrying directory %s' % (error, dir_name))
 
 def get_dir_id(service, dir_name):
     """Checks if a directory id exists, if not creates a directory and returns its id
