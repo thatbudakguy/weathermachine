@@ -156,6 +156,10 @@ def get_file_id(service, file_name, parent_id=None):
         except errors.HttpError, error:
             log('An error occurred: %s' % error)
             break
+        except socket.error:
+            log('Caught socket error, retrying file %s in 10 seconds' % file_name)
+            time.sleep(10)
+            get_file_id(service, file_name, parent_id)
     return None
 
 def do_file_upload(service, file_metadata, media):
@@ -175,8 +179,8 @@ def do_file_upload(service, file_metadata, media):
         log('Upload failed: %s' % error)
         sys.exit('Error: %s' % error)
     except socket.error:
-        log('Caught socket error, retrying file %s in 5 seconds' % file_uploaded.get('title'))
-        time.sleep(5)
+        log('Caught socket error, retrying file %s in 10 seconds' % file_uploaded.get('title'))
+        time.sleep(10)
         do_file_upload(service, file_metadata, media)
 
 def upload_file(service, input_file, parent_id):
