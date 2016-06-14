@@ -175,7 +175,7 @@ def do_file_upload(service, file_metadata, media):
         log('Upload failed: %s' % error)
         sys.exit('Error: %s' % error)
     except socket.error:
-        log('Caught socket error %s, retrying file %s in 5 seconds' % (error, file_uploaded.get('title')))
+        log('Caught socket error, retrying file %s in 5 seconds' % file_uploaded.get('title'))
         time.sleep(5)
         do_file_upload(service, file_metadata, media)
 
