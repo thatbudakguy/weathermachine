@@ -9,8 +9,8 @@ import sys
 import csv
 import argparse
 import socket
+from functools import wraps
 import httplib2
-
 from apiclient import discovery
 from apiclient.http import MediaFileUpload
 from apiclient import errors
@@ -134,54 +134,61 @@ def create_meta_dict(metadata):
     for line in metadata:
         METADATA[line[0]] = line[1:]
 
+# Retry decorator with exponential backoff
+def retry(ExceptionToCheck, tries=4, delay=3, backoff=2):
+    '''Retries a function or method until it returns True.'''
+
+    def deco_retry(f):
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except ExceptionToCheck, e:
+                    msg = "%s, Retrying in %d seconds..." % (str(e), mdelay)
+                    log(msg)
+                    print(msg)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+        return f_retry  # true decorator
+    return deco_retry
+
+@retry((errors.HttpError, socket.error), tries=5)
 def get_file_id(service, file_name, parent_id=None):
     """Checks if a file exists in a given parent directory.
     Returns:
         the id of the file or None
     """
-    page_token = None
+    page_token = False
     while True:
-        try:
-            param = {}
-            if page_token:
-                param['pageToken'] = page_token
-            children = service.files().list(q="'%s' in parents" % parent_id, **param).execute()
-            for child in children.get('items', []):
-                if child['title'] == file_name:
-                    log('Found existing file: %s' % child['title'])
-                    return child['id']
-            page_token = children.get('nextPageToken')
-            if not page_token:
-                return None
-        except errors.HttpError, error:
-            log('An error occurred: %s' % error)
-            break
-        except socket.error:
-            log('Caught socket error, retrying file %s in 10 seconds' % file_name)
-            time.sleep(10)
-            get_file_id(service, file_name, parent_id)
-    return None
+        param = {}
+        if page_token:
+            param['pageToken'] = page_token
+        children = service.files().list(q="'%s' in parents" % parent_id, **param).execute()
+        for child in children.get('items', []):
+            if child['title'] == file_name:
+                log('Found existing file: %s' % child['title'])
+                return child['id']
+        page_token = children.get('nextPageToken')
+        if not page_token:
+            return False
 
+@retry((errors.HttpError, socket.error), tries=5)
 def do_file_upload(service, file_metadata, media):
     """Uses the API to do the file upload, handling errors."""
     global UPLOADEDFILES
-    try:
-        file_uploaded = service.files().insert(body=file_metadata, media_body=media).execute()
-        UPLOADEDFILES += 1.0
-        progress = str(round(((UPLOADEDFILES/TOTALFILES)*100), 4)) + " % processed"
-        sys.stdout.write("\r")
-        sys.stdout.write(progress)
-        sys.stdout.write("\t")
-        sys.stdout.write('Uploaded file: %s' % file_uploaded.get('title'))
-        sys.stdout.flush()
-        log('Success: uploaded file %s' % file_uploaded.get('title'))
-    except errors.HttpError, error:
-        log('Upload failed: %s' % error)
-        sys.exit('Error: %s' % error)
-    except socket.error:
-        log('Caught socket error, retrying file %s in 10 seconds' % file_uploaded.get('title'))
-        time.sleep(10)
-        do_file_upload(service, file_metadata, media)
+    file_uploaded = service.files().insert(body=file_metadata, media_body=media).execute()
+    UPLOADEDFILES += 1.0
+    progress = str(round(((UPLOADEDFILES/TOTALFILES)*100), 4)) + " % processed"
+    sys.stdout.write("\r")
+    sys.stdout.write(progress)
+    sys.stdout.write("\t")
+    sys.stdout.write('Uploaded file: %s' % file_uploaded.get('title'))
+    sys.stdout.flush()
+    log('Success: uploaded file %s' % file_uploaded.get('title'))
 
 def upload_file(service, input_file, parent_id):
     """Uploads a file if it does not yet exist.
@@ -212,6 +219,7 @@ def upload_file(service, input_file, parent_id):
         # do the upload
         do_file_upload(service, file_metadata, media)
 
+@retry((errors.HttpError, socket.error), tries=5)
 def create_dir(service, dir_name, parent_id=None):
     """Creates a directory on google drive and returns its id
 
@@ -222,16 +230,10 @@ def create_dir(service, dir_name, parent_id=None):
     }
     if parent_id:
         file_metadata['parents'] = [{'id':parent_id}]
-    try:
-        folder = service.files().insert(body=file_metadata, fields='id').execute()
-        log('Success: created a directory %s' % dir_name)
-        print('created directory: %s' % dir_name)
-        return folder.get('id')
-    except errors.HttpError, error:
-        log('Directory Creation failed: %s' % error)
-        sys.exit('Error: %s' % error)
-    except socket.error:
-        log('Caught socket error %s, retrying directory %s' % (error, dir_name))
+    folder = service.files().insert(body=file_metadata, fields='id').execute()
+    log('Success: created a directory %s' % dir_name)
+    print('created directory: %s' % dir_name)
+    return folder.get('id')
 
 def get_dir_id(service, dir_name):
     """Checks if a directory id exists, if not creates a directory and returns its id
