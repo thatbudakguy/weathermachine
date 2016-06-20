@@ -176,6 +176,23 @@ def get_file_id(service, file_name, parent_id=None):
         if not page_token:
             return False
 
+def count_files(service, parent_id):
+    """Counts number of files in a folder on google drive
+    """
+    counter = 0
+    result = []
+    page_token = None
+    while True:
+        param = {'maxResults': 1000}
+        if page_token:
+            param['pageToken'] = page_token
+        children = service.files().list(q="'%s' in parents" % parent_id, **param).execute()
+        counter += len(children.get('items', []))
+        page_token = children.get('nextPageToken')
+        if not page_token:
+            print('Number of files in folder: %d' % counter)
+            break
+
 @retry((errors.HttpError, socket.error), tries=5)
 def do_file_upload(service, file_metadata, media):
     """Uses the API to do the file upload, handling errors."""
@@ -271,6 +288,7 @@ def upload_progress(root_dir_path):
             if not fname.startswith('.'):
                 TOTALFILES += 1.0
 
+
 def export_dir():
     """Exports the DIR dictionary to a csv file
 
@@ -296,6 +314,9 @@ def main():
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
+
+    #count number of files in a particular folder
+    # count_files(service, "0Byn7eiAVCHMNcE5Gbl82YjVoUFU")
 
     import_dir()
 
