@@ -72,7 +72,6 @@ METADATA = {}
 TOTALFILES = 0.0
 UPLOADEDFILES = 0.0
 COLORNAMES = {
-    0: 'none',
     1: 'gray',
     2: 'green',
     3: 'purple',
@@ -81,10 +80,16 @@ COLORNAMES = {
     6: 'red',
     7: 'orange'
 }
+COLOR_MAP = {}
 FOLDER_COLORS = False
 
 # Load the logfile
 LOG_FILE = open('upload_logs.dat', 'a')
+
+# Determine the OS
+if sys.platform == "darwin":
+    FOLDER_COLORS = True
+    from xattr import xattr
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -238,15 +243,15 @@ def upload_file(service, input_file, parent_id):
 
     """
     file_name = os.path.split(input_file)[1]
-    # fix an issue with "0X" for months prior to October
-    split = file_name.split("_")
-    if len(split[1]) == 2 and split[1][0] == "0":
-        split[1] = split[1][1:]
-    month_name = "_".join(split)
     if not get_file_id(service, file_name, parent_id):
         media = MediaFileUpload(input_file, resumable=True)
         file_metadata = {'title': file_name}
         if METADATA:
+            # fix an issue with "0X" for months prior to October
+            split = file_name.split("_")
+            if len(split[1]) == 2 and split[1][0] == "0":
+                split[1] = split[1][1:]
+            month_name = "_".join(split)
             try:
                 csv_metadata = METADATA[os.path.splitext(file_name)[0]]
                 file_metadata['description'] = "Date: " + csv_metadata[0] + "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + csv_metadata[2]
@@ -263,7 +268,7 @@ def upload_file(service, input_file, parent_id):
         do_file_upload(service, file_metadata, media)
 
 @retry((errors.HttpError, socket.error), tries=5)
-def create_dir(service, dir_name, parent_id=None):
+def create_dir(service, dir_name, parent_id=None, color=None):
     """Creates a directory on google drive and returns its id
 
     """
@@ -273,6 +278,8 @@ def create_dir(service, dir_name, parent_id=None):
     }
     if parent_id:
         file_metadata['parents'] = [{'id':parent_id}]
+    if color:
+        file_metadata['folderColorRgb'] = COLOR_MAP[color]
     folder = service.files().insert(body=file_metadata, fields='id').execute()
     log('Success: created a directory %s' % dir_name)
     print('created directory: %s' % dir_name)
@@ -280,16 +287,19 @@ def create_dir(service, dir_name, parent_id=None):
 
 def get_dir_color(dir_path):
     """Checks the label color of a local folder on an OSX machine."""
+    if not FOLDER_COLORS:
+        return None
     attrs = xattr(dir_path)
     try:
         finder_attrs = attrs[u'com.apple.FinderInfo']
         flags = unpack(32*'B', finder_attrs)
         color = flags[9] >> 1 & 7
+        return COLORNAMES[color]
     except KeyError:
-        color = 0
-    return COLORNAMES[color]
+        return None
 
-def get_dir_id(service, dir_name):
+
+def get_dir_id(service, dir_name, color):
     """Checks if a directory id exists, if not creates a directory and returns its id
 
     """
@@ -299,9 +309,9 @@ def get_dir_id(service, dir_name):
         head, tail = os.path.split(dir_name)
         if head:
             parent_id = DIR[head]
-            dir_id = create_dir(service, tail, parent_id)
+            dir_id = create_dir(service, tail, parent_id, color)
         else:
-            dir_id = create_dir(service, tail)
+            dir_id = create_dir(service, tail, None, color)
         log_dir(dir_name, dir_id)
         return dir_id
 
@@ -309,7 +319,7 @@ def upload_dir(service, root_dir_name, root_dir_path):
     """Traverse through a given root_directory"""
     for dir_path, sub_dir_list, file_list in os.walk(root_dir_path):
         dir_name = os.path.split(dir_path[:-1])[1]
-        dir_id = get_dir_id(service, dir_name)
+        dir_id = get_dir_id(service, dir_name, get_dir_color(dir_path))
         for fname in file_list:
             if not fname.startswith('.'):
                 file_path = dir_path+"/"+fname
@@ -349,26 +359,24 @@ def main():
 
     """
     global FOLDER_COLORS
+    global COLOR_MAP
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
     log("Authentication success.")
-
-    if sys.platform == "darwin":
-        FOLDER_COLORS = True
-        from xattr import xattr
 
     # if no arguments, show the help and exit
     if len(sys.argv) == 1:
         FLAGS.print_help()
         sys.exit(1)
 
+    # about = service.about().get().execute()
+    # print(about['folderColorPalette'])
+
     if ARGS.color_map:
         if FOLDER_COLORS:
             color_map_json = open(ARGS.color_map[0]).read()
-            color_map_data = json.loads(color_map_json)
-            print(color_map_data)
-            sys.exit(0)
+            COLOR_MAP = json.loads(color_map_json)
         else:
             print("Error: host OS is not OSX; aborting colormap")
             sys.exit(1)
@@ -388,7 +396,7 @@ def main():
         import_dir()
         log("beginning upload using root %s" % ARGS.root_dir[0])
         root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
-        root_id = get_dir_id(service, root_dir)
+        root_id = get_dir_id(service, root_dir, get_dir_color(ARGS.root_dir[0]))
         log_dir(root_dir, root_id)
         upload_progress(ARGS.root_dir[0])
         upload_dir(service, root_dir, ARGS.root_dir[0])
