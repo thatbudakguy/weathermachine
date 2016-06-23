@@ -348,6 +348,7 @@ def main():
     """Main Function
 
     """
+    global FOLDER_COLORS
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
