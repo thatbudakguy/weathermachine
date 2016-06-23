@@ -27,15 +27,19 @@ FLAGS.add_argument(
     '--root_dir',
     type=str,
     nargs=1,
-    required=True,
-    help='Root directory containing all files to be uploaded.')
+    help='Path to root directory containing all files to be uploaded.')
 FLAGS.add_argument(
     '-m',
     '--metadata',
     type=str,
     nargs=1,
-    required=False,
-    help='Comma-separated file of metadata to apply to uploaded files.')
+    help='Path to comma-separated file of metadata to apply to uploaded files.')
+FLAGS.add_argument(
+    '-c',
+    '--count_files',
+    type=str,
+    nargs=1,
+    help='ID of a Google Drive folder to count total containing files.')
 ARGS = FLAGS.parse_args()
 
 # Populate the CLIENT_SECRET_FILE using non-sensitive data from auth.json
@@ -180,7 +184,6 @@ def count_files(service, parent_id):
     """Counts number of files in a folder on google drive
     """
     counter = 0
-    result = []
     page_token = None
     while True:
         param = {'maxResults': 1000}
@@ -189,8 +192,13 @@ def count_files(service, parent_id):
         children = service.files().list(q="'%s' in parents" % parent_id, **param).execute()
         counter += len(children.get('items', []))
         page_token = children.get('nextPageToken')
+        sys.stdout.write("\r")
+        sys.stdout.write('%d files counted' % counter)
+        sys.stdout.flush()
         if not page_token:
-            print('Number of files in folder: %d' % counter)
+            sys.stdout.write("\r")
+            sys.stdout.write('Number of files in folder: %d \n' % counter)
+            sys.stdout.flush()
             break
 
 @retry((errors.HttpError, socket.error), tries=5)
@@ -314,28 +322,32 @@ def main():
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
+    log("Authentication success.")
 
-    #count number of files in a particular folder
-    # count_files(service, "0Byn7eiAVCHMNcE5Gbl82YjVoUFU")
+    if len(sys.argv) == 1:
+        FLAGS.print_help()
+        sys.exit(1)
 
-    import_dir()
+    if ARGS.count_files:
+        count_files(service, ARGS.count_files[0])
+        sys.exit(0)
 
-    log("Authentication success, beginning upload using root %s" % ARGS.root_dir[0])
-
-    if ARGS.metadata[0]:
+    if ARGS.metadata:
         create_meta_dict(clean_csv(read_csv(ARGS.metadata[0])))
         for key, value in METADATA.items():
             newkey = key.replace('.', '_')
             METADATA[newkey] = METADATA[key]
             del METADATA[key]
 
-    root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
-    root_id = get_dir_id(service, root_dir)
-    log_dir(root_dir, root_id)
-    upload_progress(ARGS.root_dir[0])
-    upload_dir(service, root_dir, ARGS.root_dir[0])
-
-    export_dir()
+    if ARGS.root_dir:
+        import_dir()
+        log("beginning upload using root %s" % ARGS.root_dir[0])
+        root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
+        root_id = get_dir_id(service, root_dir)
+        log_dir(root_dir, root_id)
+        upload_progress(ARGS.root_dir[0])
+        upload_dir(service, root_dir, ARGS.root_dir[0])
+        export_dir()
 
 if __name__ == '__main__':
     main()
