@@ -164,7 +164,7 @@ def get_file_id(service, file_name, parent_id=None):
     """
     page_token = False
     while True:
-        param = {}
+        param = {'maxResults': 1000}
         if page_token:
             param['pageToken'] = page_token
         children = service.files().list(q="'%s' in parents" % parent_id, **param).execute()
