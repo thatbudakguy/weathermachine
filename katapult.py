@@ -9,6 +9,8 @@ import sys
 import csv
 import argparse
 import socket
+from xattr import xattr
+from struct import unpack
 from functools import wraps
 import httplib2
 from apiclient import discovery
@@ -35,11 +37,17 @@ FLAGS.add_argument(
     nargs=1,
     help='Path to comma-separated file of metadata to apply to uploaded files.')
 FLAGS.add_argument(
-    '-c',
+    '-f',
     '--count_files',
     type=str,
     nargs=1,
     help='ID of a Google Drive folder to count total containing files.')
+FLAGS.add_argument(
+    '-c',
+    '--color_map',
+    type=str,
+    nargs=1,
+    help='Path to a JSON file specifying how to translate OSX label colors to Google Drive folder colors.')
 ARGS = FLAGS.parse_args()
 
 # Populate the CLIENT_SECRET_FILE using non-sensitive data from auth.json
@@ -59,11 +67,22 @@ SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Katapult'
 
-# Dictionaries for folder names and ids, metadata, uploaded files
+# Global variables
 DIR = {}
 METADATA = {}
 TOTALFILES = 0.0
 UPLOADEDFILES = 0.0
+COLORNAMES = {
+    0: 'none',
+    1: 'gray',
+    2: 'green',
+    3: 'purple',
+    4: 'blue',
+    5: 'yellow',
+    6: 'red',
+    7: 'orange'
+}
+FOLDER_COLORS = False
 
 # Load the logfile
 LOG_FILE = open('upload_logs.dat', 'a')
@@ -260,6 +279,17 @@ def create_dir(service, dir_name, parent_id=None):
     print('created directory: %s' % dir_name)
     return folder.get('id')
 
+def get_dir_color(dir_path):
+    """Checks the label color of a local folder on an OSX machine."""
+    attrs = xattr(dir_path)
+    try:
+        finder_attrs = attrs[u'com.apple.FinderInfo']
+        flags = unpack(32*'B', finder_attrs)
+        color = flags[9] >> 1 & 7
+    except KeyError:
+        color = 0
+    return COLORNAMES[color]
+
 def get_dir_id(service, dir_name):
     """Checks if a directory id exists, if not creates a directory and returns its id
 
@@ -324,9 +354,21 @@ def main():
     service = discovery.build('drive', 'v2', http=http)
     log("Authentication success.")
 
+    if sys.platform == "darwin":
+        FOLDER_COLORS = True
+
+    # if no arguments, show the help and exit
     if len(sys.argv) == 1:
         FLAGS.print_help()
         sys.exit(1)
+
+    if ARGS.color_map:
+        if FOLDER_COLORS:
+            print(ARGS.color_map[0])
+            sys.exit(0)
+        else:
+            print("Error: host OS is not OSX; aborting colormap")
+            sys.exit(1)
 
     if ARGS.count_files:
         count_files(service, ARGS.count_files[0])
