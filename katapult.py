@@ -9,7 +9,6 @@ import sys
 import csv
 import argparse
 import socket
-from xattr import xattr
 from struct import unpack
 from functools import wraps
 import httplib2
@@ -356,6 +355,7 @@ def main():
 
     if sys.platform == "darwin":
         FOLDER_COLORS = True
+        from xattr import xattr
 
     # if no arguments, show the help and exit
     if len(sys.argv) == 1:
@@ -364,7 +364,9 @@ def main():
 
     if ARGS.color_map:
         if FOLDER_COLORS:
-            print(ARGS.color_map[0])
+            color_map_json = open(ARGS.color_map[0]).read()
+            color_map_data = json.loads(color_map_json)
+            print(color_map_data)
             sys.exit(0)
         else:
             print("Error: host OS is not OSX; aborting colormap")
