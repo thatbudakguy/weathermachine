@@ -1,5 +1,6 @@
 #Upload log
 upload_logs.dat
+dir_ids.csv
 
 # Authentication
 secret.json
