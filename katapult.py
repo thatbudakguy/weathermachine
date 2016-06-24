@@ -183,7 +183,7 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2):
         return f_retry  # true decorator
     return deco_retry
 
-@retry((errors.HttpError, socket.error), tries=5)
+@retry((errors.HttpError, socket.error), tries=10)
 def get_file_id(service, file_name, parent_id=None):
     """Checks if a file exists in a given parent directory.
     Returns:
@@ -224,7 +224,7 @@ def count_files(service, parent_id):
             sys.stdout.flush()
             break
 
-@retry((errors.HttpError, socket.error), tries=5)
+@retry((errors.HttpError, socket.error), tries=10)
 def do_file_upload(service, file_metadata, media):
     """Uses the API to do the file upload, handling errors."""
     global UPLOADEDFILES
@@ -267,7 +267,7 @@ def upload_file(service, input_file, parent_id):
         # do the upload
         do_file_upload(service, file_metadata, media)
 
-@retry((errors.HttpError, socket.error), tries=5)
+@retry((errors.HttpError, socket.error), tries=10)
 def create_dir(service, dir_name, parent_id=None, color=None):
     """Creates a directory on google drive and returns its id
 
