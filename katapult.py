@@ -47,6 +47,11 @@ FLAGS.add_argument(
     type=str,
     nargs=1,
     help='Path to a JSON file specifying how to translate OSX label colors to Google Drive folder colors.')
+FLAGS.add_argument(
+    '-d',
+    '--date_file',
+    action='store_true',
+    help='Flag to parse date and other metadata values from file name, if exists,')
 ARGS = FLAGS.parse_args()
 
 # Populate the CLIENT_SECRET_FILE using non-sensitive data from auth.json
@@ -224,6 +229,11 @@ def count_files(service, parent_id):
             sys.stdout.flush()
             break
 
+def file_name_to_date(file_name):
+    parts = file_name.split(".")
+    file_metadata = {'description':"Date: 19"+parts[0]}
+    return file_metadata
+
 @retry((errors.HttpError, socket.error), tries=10)
 def do_file_upload(service, file_metadata, media):
     """Uses the API to do the file upload, handling errors."""
@@ -262,6 +272,8 @@ def upload_file(service, input_file, parent_id):
                 except KeyError:
                     log("Didn't find metadata for file %s, uploading anyway" % file_name)
                     print("Didn't find metadata for file %s, uploading anyway" % file_name)
+        if ARGS.date_file:
+            file_metadata = file_name_to_date(file_name)
         if parent_id:
             file_metadata['parents'] = [{'id':parent_id}]
         # do the upload
@@ -369,9 +381,6 @@ def main():
     if len(sys.argv) == 1:
         FLAGS.print_help()
         sys.exit(1)
-
-    # about = service.about().get().execute()
-    # print(about['folderColorPalette'])
 
     if ARGS.color_map:
         if FOLDER_COLORS:
