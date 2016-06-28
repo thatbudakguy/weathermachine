@@ -231,7 +231,7 @@ def count_files(service, parent_id):
 
 def file_name_to_date(file_name):
     parts = file_name.split(".")
-    file_metadata = {'description':"Date: 19"+parts[0]}
+    file_metadata = "Date: 19"+parts[0]
     return file_metadata
 
 @retry((errors.HttpError, socket.error), tries=10)
@@ -273,7 +273,7 @@ def upload_file(service, input_file, parent_id):
                     log("Didn't find metadata for file %s, uploading anyway" % file_name)
                     print("Didn't find metadata for file %s, uploading anyway" % file_name)
         if ARGS.date_file:
-            file_metadata = file_name_to_date(file_name)
+            file_metadata['description'] = file_name_to_date(file_name)
         if parent_id:
             file_metadata['parents'] = [{'id':parent_id}]
         # do the upload
@@ -310,7 +310,6 @@ def get_dir_color(dir_path):
     except KeyError:
         return None
 
-
 def get_dir_id(service, dir_name, color):
     """Checks if a directory id exists, if not creates a directory and returns its id
 
@@ -330,7 +329,9 @@ def get_dir_id(service, dir_name, color):
 def upload_dir(service, root_dir_name, root_dir_path):
     """Traverse through a given root_directory"""
     for dir_path, sub_dir_list, file_list in os.walk(root_dir_path):
-        dir_name = os.path.split(dir_path[:-1])[1]
+        print("dir path is" + dir_path)
+        dir_name = os.path.split(dir_path)[1]
+        print("dir name is" + dir_name)
         dir_id = get_dir_id(service, dir_name, get_dir_color(dir_path))
         for fname in file_list:
             if not fname.startswith('.'):
@@ -404,7 +405,7 @@ def main():
     if ARGS.root_dir:
         import_dir()
         log("beginning upload using root %s" % ARGS.root_dir[0])
-        root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
+        root_dir = os.path.split(ARGS.root_dir[0])[1]
         root_id = get_dir_id(service, root_dir, get_dir_color(ARGS.root_dir[0]))
         log_dir(root_dir, root_id)
         upload_progress(ARGS.root_dir[0])
