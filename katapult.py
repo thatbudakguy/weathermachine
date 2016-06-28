@@ -47,6 +47,11 @@ FLAGS.add_argument(
     type=str,
     nargs=1,
     help='Path to a JSON file specifying how to translate OSX label colors to Google Drive folder colors.')
+FLAGS.add_argument(
+    '-d',
+    '--date_file',
+    action='store_true',
+    help='Flag to parse date and other metadata values from file name, if exists,')
 ARGS = FLAGS.parse_args()
 
 # Populate the CLIENT_SECRET_FILE using non-sensitive data from auth.json
@@ -224,6 +229,11 @@ def count_files(service, parent_id):
             sys.stdout.flush()
             break
 
+def file_name_to_date(file_name):
+    parts = file_name.split(".")
+    file_metadata = "Date: 19"+parts[0]
+    return file_metadata
+
 @retry((errors.HttpError, socket.error), tries=10)
 def do_file_upload(service, file_metadata, media):
     """Uses the API to do the file upload, handling errors."""
@@ -262,6 +272,8 @@ def upload_file(service, input_file, parent_id):
                 except KeyError:
                     log("Didn't find metadata for file %s, uploading anyway" % file_name)
                     print("Didn't find metadata for file %s, uploading anyway" % file_name)
+        if ARGS.date_file:
+            file_metadata['description'] = file_name_to_date(file_name)
         if parent_id:
             file_metadata['parents'] = [{'id':parent_id}]
         # do the upload
@@ -298,7 +310,6 @@ def get_dir_color(dir_path):
     except KeyError:
         return None
 
-
 def get_dir_id(service, dir_name, color):
     """Checks if a directory id exists, if not creates a directory and returns its id
 
@@ -318,7 +329,9 @@ def get_dir_id(service, dir_name, color):
 def upload_dir(service, root_dir_name, root_dir_path):
     """Traverse through a given root_directory"""
     for dir_path, sub_dir_list, file_list in os.walk(root_dir_path):
-        dir_name = os.path.split(dir_path[:-1])[1]
+        print("dir path is" + dir_path)
+        dir_name = os.path.split(dir_path)[1]
+        print("dir name is" + dir_name)
         dir_id = get_dir_id(service, dir_name, get_dir_color(dir_path))
         for fname in file_list:
             if not fname.startswith('.'):
@@ -354,6 +367,22 @@ def import_dir():
         for line in dir_csv:
             DIR[line[0]] = line[1]
 
+def loopDrive(service, folder_id):
+    page_token = None
+    while True:
+        param = {}
+        if page_token:
+            param['pageToken'] = page_token
+        children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
+
+        for child in children.get('items',[]):
+            print('File/Folder Name: %s' % child['title'])
+            loopDrive(service, child['id'])
+        page_token = children.get('nextPageToken')
+        if not page_token:
+            return
+
+
 def main():
     """Main Function
 
@@ -365,13 +394,13 @@ def main():
     service = discovery.build('drive', 'v2', http=http)
     log("Authentication success.")
 
+    loopDrive(service, "0Byn7eiAVCHMNUVVUUzZoTEFWbFU")
+    sys.exit(1)
+
     # if no arguments, show the help and exit
     if len(sys.argv) == 1:
         FLAGS.print_help()
         sys.exit(1)
-
-    # about = service.about().get().execute()
-    # print(about['folderColorPalette'])
 
     if ARGS.color_map:
         if FOLDER_COLORS:
@@ -395,7 +424,7 @@ def main():
     if ARGS.root_dir:
         import_dir()
         log("beginning upload using root %s" % ARGS.root_dir[0])
-        root_dir = os.path.split(ARGS.root_dir[0][:-1])[1]
+        root_dir = os.path.split(ARGS.root_dir[0])[1]
         root_id = get_dir_id(service, root_dir, get_dir_color(ARGS.root_dir[0]))
         log_dir(root_dir, root_id)
         upload_progress(ARGS.root_dir[0])
