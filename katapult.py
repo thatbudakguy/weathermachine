@@ -366,6 +366,22 @@ def import_dir():
         for line in dir_csv:
             DIR[line[0]] = line[1]
 
+def loopDrive(service, folder_id):
+    page_token = None
+    while True:
+        param = {}
+        if page_token:
+            param['pageToken'] = page_token
+        children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
+
+        for child in children.get('items',[]):
+            print('File/Folder Name: %s' % child['title'])
+            loopDrive(service, child['id'])
+        page_token = children.get('nextPageToken')
+        if not page_token:
+            return
+
+
 def main():
     """Main Function
 
@@ -376,6 +392,9 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
     log("Authentication success.")
+
+    loopDrive(service, "0Byn7eiAVCHMNUVVUUzZoTEFWbFU")
+    sys.exit(1)
 
     # if no arguments, show the help and exit
     if len(sys.argv) == 1:
