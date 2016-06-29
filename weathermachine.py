@@ -19,9 +19,6 @@ import oauth2client
 from oauth2client import client
 from oauth2client import tools
 
-# Load the logfile
-LOG_FILE = open('upload_logs.dat', 'a')
-
 # Setup the command-line options
 FLAGS = argparse.ArgumentParser(
     parents=[tools.argparser],
@@ -62,6 +59,27 @@ with open('secret.json', 'w') as secret:
 SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Katapult'
+
+# Global variables
+COLORNAMES = {
+    1: 'gray',
+    2: 'green',
+    3: 'purple',
+    4: 'blue',
+    5: 'yellow',
+    6: 'red',
+    7: 'orange'
+}
+COLOR_MAP = {}
+MAC_OS = False
+
+# Determine the OS
+if sys.platform == "darwin":
+    from xattr import xattr
+    MAC_OS = True
+
+# Load the logfile
+LOG_FILE = open('upload_logs.dat', 'a')
 
 def log(msg):
     """Logs a timestamp and a message to the logfile."""
@@ -176,17 +194,34 @@ def check_filename_metadata(service, folder_id):
         if not page_token:
             return None
 
+def get_dir_color(dir_path):
+    """Checks the label color of a local folder on an OSX machine."""
+    if not MAC_OS:
+        return None
+    attrs = xattr(dir_path)
+    try:
+        finder_attrs = attrs[u'com.apple.FinderInfo']
+        flags = unpack(32*'B', finder_attrs)
+        color = flags[9] >> 1 & 7
+        return COLORNAMES[color]
+    except KeyError:
+        return None
+
 def loop_local(root_dir_path, total=0):
     """ Generate a map of the local directory structure """
-    result = []
+    result = {}
     for root, dirs, files in os.walk(root_dir_path):
         for name in files:
             if not name.startswith('.'):
-                result.append(name)
+                parent = os.path.split(root)[1]
+                # color = get_dir_color(os.path.join(root,name))
+                result[name] = {'parent':parent}
                 total += 1
         for name in dirs:
             if not name.startswith('.'):
-                result.append(name)
+                parent = os.path.split(root)[1]
+                color = get_dir_color(os.path.join(root,name))
+                result[name] = {'parent':parent,'color':color}
                 total += 1
     return result, total
 
@@ -217,6 +252,10 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
     log("Authentication success.")
+
+    # testing
+
+    loop_local(ARGS.root_dir[0])
 
     # if no arguments, show the help and exit
     if len(sys.argv) == 1:
