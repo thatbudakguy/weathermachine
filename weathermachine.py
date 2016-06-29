@@ -96,20 +96,46 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
+# Retry decorator with exponential backoff
+def retry(exception_to_check, tries=4, delay=3, backoff=2):
+    '''Retries a function or method until it returns True.'''
+
+    def deco_retry(func):
+        '''decorator'''
+        @wraps(func)
+        def f_retry(*args, **kwargs):
+            '''main function'''
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return func(*args, **kwargs)
+                except exception_to_check, text:
+                    msg = "%s, Retrying in %d seconds..." % (str(text), mdelay)
+                    log(msg)
+                    print(msg)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return func(*args, **kwargs)
+        return f_retry  # true decorator
+    return deco_retry
+
+@retry((errors.HttpError, socket.error), tries=10)
 def edit_gfile(service, file_id, data):
+    '''Changes metadata of remote file.'''
     try:
-      file = {'description': data}
-      # Add metadata as description to the file.
-      updated_file = service.files().patch(
-          fileId=file_id,
-          body=file,
-          fields='description').execute()
-      return updated_file
+        file = {'description':data}
+        # Add metadata as description to the file.
+        updated_file = service.files().patch(
+            fileId=file_id,
+            body=file,
+            fields='description').execute()
+        return updated_file
     except errors.HttpError, error:
-      log('An error occurred while adding metada to file: %s' % error)
-      return None
+        log('An error occurred while adding metada to file: %s' % error)
+        return None
 
-
+@retry((errors.HttpError, socket.error), tries=10)
 def filename_to_metadata(service, folder_id):
     page_token = None
     while True:
@@ -128,6 +154,7 @@ def filename_to_metadata(service, folder_id):
         if not page_token:
             return None
 
+@retry((errors.HttpError, socket.error), tries=10)
 def check_filename_metadata(service, folder_id):
     page_token = None
     while True:
@@ -163,6 +190,7 @@ def loop_local(root_dir_path, total=0):
                 total += 1
     return result, total
 
+@retry((errors.HttpError, socket.error), tries=10)
 def loop_drive(service, folder_id, result, total=0):
     """ Generates a map of the google drive folder structure """
     page_token = None
