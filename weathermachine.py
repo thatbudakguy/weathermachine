@@ -49,7 +49,6 @@ with open('secret.json', 'w') as secret:
     secret.write(SECRET_JSON_STRING)
 
 # If modifying these scopes, delete your previously saved credentials
-# at ~/.credentials/drive-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Katapult'
