@@ -19,6 +19,9 @@ import oauth2client
 from oauth2client import client
 from oauth2client import tools
 
+# Load the logfile
+LOG_FILE = open('upload_logs.dat', 'a')
+
 # Setup the command-line options
 FLAGS = argparse.ArgumentParser(
     parents=[tools.argparser],
@@ -35,6 +38,13 @@ FLAGS.add_argument(
     type=str,
     nargs=1,
     help='Google Drive folder ID to check against root directory for upload validity.')
+FLAGS.add_argument(
+    '-t',
+    '--metadata_from_title',
+    type=str,
+    nargs=1,
+    help='Add metadata to google file from its file name'
+)
 ARGS = FLAGS.parse_args()
 
 # Populate the CLIENT_SECRET_FILE using non-sensitive data from auth.json
@@ -52,6 +62,11 @@ with open('secret.json', 'w') as secret:
 SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Katapult'
+
+def log(msg):
+    """Logs a timestamp and a message to the logfile."""
+    stamp = datetime.datetime.now()
+    LOG_FILE.write((str(stamp) + ': ' + msg + '\n').encode('utf8'))
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -80,6 +95,59 @@ def get_credentials():
             credentials = tools.run(flow, store)
         print('Storing credentials to ' + credential_path)
     return credentials
+
+def edit_gfile(service, file_id, data):
+    try:
+      file = {'description': data}
+      # Add metadata as description to the file.
+      updated_file = service.files().patch(
+          fileId=file_id,
+          body=file,
+          fields='description').execute()
+      return updated_file
+    except errors.HttpError, error:
+      log('An error occurred while adding metada to file: %s' % error)
+      return None
+
+
+def filename_to_metadata(service, folder_id):
+    page_token = None
+    while True:
+        param = {'maxResults': 1000}
+        if page_token:
+            param['pageToken'] = page_token
+        children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
+        for child in children.get('items', []):
+            filename = child['title']
+            if filename[0].isdigit() and filename[1].isdigit() and filename[2] == ".":
+                data = "Date: 19"+filename[0]+filename[1]
+                log('Adding metadata to file: %s' % filename)
+                edit_gfile(service, child['id'], data)
+            filename_to_metadata(service, child['id'])
+        page_token = children.get('nextPageToken')
+        if not page_token:
+            return None
+
+def check_filename_metadata(service, folder_id):
+    page_token = None
+    while True:
+        param = {'maxResults': 1000}
+        if page_token:
+            param['pageToken'] = page_token
+        children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
+        for child in children.get('items', []):
+            if not child['mimeType'] == "application/vnd.google-apps.folder":
+                filename = child['title']
+                metadata = child['description']
+                if filename[0].isdigit() and filename[1].isdigit() and filename[2] == ".":
+                    if not filename[:2] == metadata[-2:]:
+                        log('File has wrong/missing metadata: %s' % filename)
+                    else:
+                        log('File double checked for metadata: %s' % filename)
+            check_filename_metadata(service, child['id'])
+        page_token = children.get('nextPageToken')
+        if not page_token:
+            return None
 
 def loop_local(root_dir_path, total=0):
     """ Generate a map of the local directory structure """
@@ -120,7 +188,7 @@ def main():
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
-    print("Authentication success.")
+    log("Authentication success.")
 
     # if no arguments, show the help and exit
     if len(sys.argv) == 1:
@@ -152,6 +220,10 @@ def main():
             for item in diff_items:
                 print(item)
         sys.exit(0)
+
+    if ARGS.metadata_from_title:
+        filename_to_metadata(service, ARGS.metadata_from_title[0])
+        check_filename_metadata(service, ARGS.metadata_from_title[0])
 
 if __name__ == '__main__':
     main()
