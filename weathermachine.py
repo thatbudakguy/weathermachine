@@ -129,6 +129,27 @@ def filename_to_metadata(service, folder_id):
         if not page_token:
             return None
 
+def check_filename_metadata(service, folder_id):
+    page_token = None
+    while True:
+        param = {'maxResults': 1000}
+        if page_token:
+            param['pageToken'] = page_token
+        children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
+        for child in children.get('items', []):
+            if not child['mimeType'] == "application/vnd.google-apps.folder":
+                filename = child['title']
+                metadata = child['description']
+                if filename[0].isdigit() and filename[1].isdigit() and filename[2] == ".":
+                    if not filename[:2] == metadata[-2:]:
+                        log('File has wrong/missing metadata: %s' % filename)
+                    else:
+                        log('File double checked for metadata: %s' % filename)
+            check_filename_metadata(service, child['id'])
+        page_token = children.get('nextPageToken')
+        if not page_token:
+            return None
+
 def loop_local(root_dir_path, total=0):
     """ Generate a map of the local directory structure """
     result = []
@@ -203,6 +224,7 @@ def main():
 
     if ARGS.metadata_from_title:
         filename_to_metadata(service, ARGS.metadata_from_title[0])
+        check_filename_metadata(service, ARGS.metadata_from_title[0])
 
 if __name__ == '__main__':
     main()
