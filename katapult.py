@@ -46,12 +46,18 @@ FLAGS.add_argument(
     '--color_map',
     type=str,
     nargs=1,
-    help='Path to a JSON file specifying how to translate OSX label colors to Google Drive folder colors.')
+    help='Path to a JSON file mapping OSX label colors to Drive folder colors.')
 FLAGS.add_argument(
     '-d',
     '--date_file',
     action='store_true',
     help='Flag to parse date and other metadata values from file name, if exists,')
+FLAGS.add_argument(
+    '-v',
+    '--check_validity',
+    type=str,
+    nargs=1,
+    help='Google Drive folder ID to check against root directory for upload validity.')
 ARGS = FLAGS.parse_args()
 
 # Populate the CLIENT_SECRET_FILE using non-sensitive data from auth.json
@@ -93,8 +99,8 @@ LOG_FILE = open('upload_logs.dat', 'a')
 
 # Determine the OS
 if sys.platform == "darwin":
-    FOLDER_COLORS = True
     from xattr import xattr
+    FOLDER_COLORS = True
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -167,24 +173,26 @@ def create_meta_dict(metadata):
         METADATA[line[0]] = line[1:]
 
 # Retry decorator with exponential backoff
-def retry(ExceptionToCheck, tries=4, delay=3, backoff=2):
+def retry(exception_to_check, tries=4, delay=3, backoff=2):
     '''Retries a function or method until it returns True.'''
 
-    def deco_retry(f):
-        @wraps(f)
+    def deco_retry(func):
+        '''decorator'''
+        @wraps(func)
         def f_retry(*args, **kwargs):
+            '''main function'''
             mtries, mdelay = tries, delay
             while mtries > 1:
                 try:
-                    return f(*args, **kwargs)
-                except ExceptionToCheck, e:
-                    msg = "%s, Retrying in %d seconds..." % (str(e), mdelay)
+                    return func(*args, **kwargs)
+                except exception_to_check, text:
+                    msg = "%s, Retrying in %d seconds..." % (str(text), mdelay)
                     log(msg)
                     print(msg)
                     time.sleep(mdelay)
                     mtries -= 1
                     mdelay *= backoff
-            return f(*args, **kwargs)
+            return func(*args, **kwargs)
         return f_retry  # true decorator
     return deco_retry
 
@@ -230,6 +238,7 @@ def count_files(service, parent_id):
             break
 
 def file_name_to_date(file_name):
+    """Gets metadata for 2-digit dates from filenames """
     parts = file_name.split(".")
     file_metadata = "Date: 19"+parts[0]
     return file_metadata
@@ -264,14 +273,20 @@ def upload_file(service, input_file, parent_id):
             month_name = "_".join(split)
             try:
                 csv_metadata = METADATA[os.path.splitext(file_name)[0]]
-                file_metadata['description'] = "Date: " + csv_metadata[0] + "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + csv_metadata[2]
+                file_metadata['description'] = "Date: " + csv_metadata[0] + \
+                "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + \
+                csv_metadata[2]
             except KeyError:
                 try:
                     csv_metadata = METADATA[os.path.splitext(month_name)[0]]
-                    file_metadata['description'] = "Date: " + csv_metadata[0] + "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + csv_metadata[2]
+                    file_metadata['description'] = "Date: " + csv_metadata[0] + \
+                    "\n\nTitle: " + csv_metadata[1] + "\n\nDescription: " + \
+                    csv_metadata[2]
                 except KeyError:
-                    log("Didn't find metadata for file %s, uploading anyway" % file_name)
-                    print("Didn't find metadata for file %s, uploading anyway" % file_name)
+                    log("Didn't find metadata for file %s, uploading anyway" \
+                    % file_name)
+                    print("Didn't find metadata for file %s, uploading anyway" \
+                    % file_name)
         if ARGS.date_file:
             file_metadata['description'] = file_name_to_date(file_name)
         if parent_id:
@@ -326,12 +341,10 @@ def get_dir_id(service, dir_name, color):
         log_dir(dir_name, dir_id)
         return dir_id
 
-def upload_dir(service, root_dir_name, root_dir_path):
+def upload_dir(service, root_dir_path):
     """Traverse through a given root_directory"""
     for dir_path, sub_dir_list, file_list in os.walk(root_dir_path):
-        print("dir path is" + dir_path)
         dir_name = os.path.split(dir_path)[1]
-        print("dir name is" + dir_name)
         dir_id = get_dir_id(service, dir_name, get_dir_color(dir_path))
         for fname in file_list:
             if not fname.startswith('.'):
@@ -367,21 +380,35 @@ def import_dir():
         for line in dir_csv:
             DIR[line[0]] = line[1]
 
-def loopDrive(service, folder_id):
+def loop_local(root_dir_path, total=0):
+    """ Generate a map of the local directory structure """
+    result = []
+    for root, dirs, files in os.walk(root_dir_path):
+        for name in files:
+            if not name.startswith('.'):
+                result.append(name)
+                total += 1
+        for name in dirs:
+            if not name.startswith('.'):
+                result.append(name)
+                total += 1
+    return result, total
+
+def loop_drive(service, folder_id, result, total=0):
+    """ Generates a map of the google drive folder structure """
     page_token = None
     while True:
-        param = {}
+        param = {'maxResults': 1000}
         if page_token:
             param['pageToken'] = page_token
         children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
-
-        for child in children.get('items',[]):
-            print('File/Folder Name: %s' % child['title'])
-            loopDrive(service, child['id'])
+        total += len(children.get('items', []))
+        for child in children.get('items', []):
+            result.append(child['title'])
+            result, total = loop_drive(service, child['id'], result, total)
         page_token = children.get('nextPageToken')
         if not page_token:
-            return
-
+            return result, total
 
 def main():
     """Main Function
@@ -393,9 +420,6 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
     log("Authentication success.")
-
-    loopDrive(service, "0Byn7eiAVCHMNUVVUUzZoTEFWbFU")
-    sys.exit(1)
 
     # if no arguments, show the help and exit
     if len(sys.argv) == 1:
@@ -421,15 +445,42 @@ def main():
             METADATA[newkey] = METADATA[key]
             del METADATA[key]
 
-    if ARGS.root_dir:
+    if ARGS.root_dir and not ARGS.check_validity:
         import_dir()
         log("beginning upload using root %s" % ARGS.root_dir[0])
         root_dir = os.path.split(ARGS.root_dir[0])[1]
         root_id = get_dir_id(service, root_dir, get_dir_color(ARGS.root_dir[0]))
         log_dir(root_dir, root_id)
         upload_progress(ARGS.root_dir[0])
-        upload_dir(service, root_dir, ARGS.root_dir[0])
+        upload_dir(service, ARGS.root_dir[0])
         export_dir()
+
+    elif ARGS.root_dir and ARGS.check_validity:
+        diff_items = []
+        root_dir_name = os.path.split(ARGS.root_dir[0])[1]
+        remote_dir = ARGS.check_validity[0]
+        log("comparing local directory %s to remote folder id %s" % (root_dir_name, remote_dir))
+        remote_result, remote_total = loop_drive(service, remote_dir, [], 0)
+        local_result, local_total = loop_local(ARGS.root_dir[0], 0)
+        if remote_total == local_total:
+            print("Total number of files match.")
+        elif local_total > remote_total:
+            diff = local_total - remote_total
+            print("Missing files: %d files found locally missing from remote" % diff)
+            for item in local_result:
+                if item not in remote_result:
+                    diff_items.append(item)
+            for item in diff_items:
+                print(item)
+        elif remote_total > local_total:
+            diff = remote_total - local_total
+            print("Missing files: %d files found remotely missing from local machine" % diff)
+            for item in remote_result:
+                if item not in remote_result:
+                    diff_items.append(item)
+            for item in diff_items:
+                print(item)
+        sys.exit(0)
 
 if __name__ == '__main__':
     main()
