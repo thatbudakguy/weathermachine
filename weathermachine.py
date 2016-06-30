@@ -21,26 +21,32 @@ from oauth2client import tools
 
 # Setup the command-line options
 FLAGS = argparse.ArgumentParser(
-    parents=[tools.argparser],
+    # parents=[tools.argparser],
     description='Upload files to Google Drive archive.')
 FLAGS.add_argument(
-    '-r',
-    '--root_dir',
+    'remote_dir',
+    metavar='R',
     type=str,
     nargs=1,
-    help='Path to root directory containing all files to be uploaded.')
+    help='ID of a remote Google Drive folder.')
 FLAGS.add_argument(
-    '-v',
-    '--check_validity',
+    'local_dir',
+    metavar='L',
     type=str,
     nargs=1,
-    help='Google Drive folder ID to check against root directory for upload validity.')
+    help='Path to a local directory.')
+FLAGS.add_argument(
+    '-c',
+    '--colorize',
+    type=str,
+    nargs=1,
+    help='Path to a JSON colormap to colorize remote folder.'
+)
 FLAGS.add_argument(
     '-t',
     '--metadata_from_title',
-    type=str,
-    nargs=1,
-    help='Add metadata to google file from its file name'
+    action='store_true',
+    help='Attempt to add metadata to remote files based on their filename.'
 )
 ARGS = FLAGS.parse_args()
 
@@ -194,7 +200,7 @@ def check_filename_metadata(service, folder_id):
         if not page_token:
             return None
 
-def get_dir_color(dir_path):
+def get_local_dir_color(dir_path):
     """Checks the label color of a local folder on an OSX machine."""
     if not MAC_OS:
         return None
@@ -214,19 +220,19 @@ def loop_local(root_dir_path, total=0):
         for name in files:
             if not name.startswith('.'):
                 parent = os.path.split(root)[1]
-                # color = get_dir_color(os.path.join(root,name))
+                # color = get_local_dir_color(os.path.join(root,name))
                 result[name] = {'parent':parent}
                 total += 1
         for name in dirs:
             if not name.startswith('.'):
                 parent = os.path.split(root)[1]
-                color = get_dir_color(os.path.join(root,name))
+                color = get_local_dir_color(os.path.join(root,name))
                 result[name] = {'parent':parent,'color':color}
                 total += 1
     return result, total
 
 @retry((errors.HttpError, socket.error), tries=10)
-def loop_drive(service, folder_id, result, total=0):
+def loop_drive(service, folder_id, result=None, total=0):
     """ Generates a map of the google drive folder structure """
     page_token = None
     while True:
@@ -236,7 +242,12 @@ def loop_drive(service, folder_id, result, total=0):
         children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
         total += len(children.get('items', []))
         for child in children.get('items', []):
-            result.append(child['title'])
+            color = service.files().get(fileId=child['id'],fields='folderColorRgb').execute()
+            parent = service.files().get(fileId=child['parents'][0]['id'],fields='title').execute()
+            if child['mimeType'] == "application/vnd.google-apps.folder":
+                result[child['title']] = {'parent':parent['title'], 'color':color['folderColorRgb']}
+            else:
+                result[child['title']] = {'parent':parent['title']}
             result, total = loop_drive(service, child['id'], result, total)
         page_token = children.get('nextPageToken')
         if not page_token:
@@ -253,37 +264,33 @@ def main():
     service = discovery.build('drive', 'v2', http=http)
     log("Authentication success.")
 
-    # testing
-
-    loop_local(ARGS.root_dir[0])
-
     # if no arguments, show the help and exit
     if len(sys.argv) == 1:
         FLAGS.print_help()
         sys.exit(1)
 
-    if ARGS.root_dir and ARGS.check_validity:
+    if ARGS.local_dir and ARGS.remote_dir:
         diff_items = []
-        root_dir_name = os.path.split(ARGS.root_dir[0])[1]
-        remote_dir = ARGS.check_validity[0]
-        remote_result, remote_total = loop_drive(service, remote_dir, [], 0)
-        local_result, local_total = loop_local(ARGS.root_dir[0], 0)
+        root_dir_name = os.path.split(ARGS.local_dir[0])[1]
+        remote_dir = ARGS.remote_dir[0]
+        remote_result, remote_total = loop_drive(service, remote_dir, {}, 0)
+        local_result, local_total = loop_local(ARGS.local_dir[0], 0)
         if remote_total == local_total:
             print("Total of %d files match" % remote_total)
         elif local_total > remote_total:
             diff = local_total - remote_total
             print("Missing files: %d files found locally missing from remote" % diff)
-            for item in local_result:
-                if item not in remote_result:
-                    diff_items.append(item)
+            for name, data in local_result:
+                if name not in remote_result:
+                    diff_items.append(name)
             for item in diff_items:
                 print(item)
         elif remote_total > local_total:
             diff = remote_total - local_total
             print("Missing files: %d files found remotely missing from local machine" % diff)
-            for item in remote_result:
-                if item not in remote_result:
-                    diff_items.append(item)
+            for name, data in remote_result:
+                if name not in local_result:
+                    diff_items.append(name)
             for item in diff_items:
                 print(item)
         sys.exit(0)
