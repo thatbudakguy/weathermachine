@@ -22,7 +22,7 @@ from oauth2client import tools
 # Setup the command-line options
 FLAGS = argparse.ArgumentParser(
     # parents=[tools.argparser],
-    description='Upload files to Google Drive archive.')
+    description='Manipulate files in a cloud archive.')
 FLAGS.add_argument(
     'remote_dir',
     metavar='R',
@@ -39,6 +39,7 @@ FLAGS.add_argument(
     '-c',
     '--colorize',
     type=str,
+    default='colormap.json',
     nargs=1,
     help='Path to a JSON colormap to colorize remote folder.'
 )
@@ -146,13 +147,13 @@ def retry(exception_to_check, tries=4, delay=3, backoff=2):
 
 @retry((errors.HttpError, socket.error), tries=10)
 def edit_gfile(service, file_id, data):
-    '''Changes metadata of remote file.'''
+    """Changes metadata of remote file."""
     try:
-        file = {'description':data}
+        file_meta = {'description':data}
         # Add metadata as description to the file.
         updated_file = service.files().patch(
             fileId=file_id,
-            body=file,
+            body=file_meta,
             fields='description').execute()
         return updated_file
     except errors.HttpError, error:
@@ -161,6 +162,7 @@ def edit_gfile(service, file_id, data):
 
 @retry((errors.HttpError, socket.error), tries=10)
 def filename_to_metadata(service, folder_id):
+    """Converts a file's name to Date: metadata"""
     page_token = None
     while True:
         param = {'maxResults': 1000}
@@ -180,6 +182,7 @@ def filename_to_metadata(service, folder_id):
 
 @retry((errors.HttpError, socket.error), tries=10)
 def check_filename_metadata(service, folder_id):
+    """Ensures that a file has metadata based on its name, inserts if not"""
     page_token = None
     while True:
         param = {'maxResults': 1000}
@@ -188,13 +191,16 @@ def check_filename_metadata(service, folder_id):
         children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
         for child in children.get('items', []):
             if not child['mimeType'] == "application/vnd.google-apps.folder":
-                filename = child['title']
-                metadata = child['description']
-                if filename[0].isdigit() and filename[1].isdigit() and filename[2] == ".":
-                    if not filename[:2] == metadata[-2:]:
-                        log('File has wrong/missing metadata: %s' % filename)
-                    else:
-                        log('File double checked for metadata: %s' % filename)
+                child_title = service.files().get(fileId=child['id'],fields='title').execute()
+                child_desc = service.files().get(fileId=child['id'],fields='description').execute()
+                filename = child_title['title']
+                if 'description' in child_desc.keys():
+                    metadata = child_desc['description']
+                    if filename[0].isdigit() and filename[1].isdigit() and filename[2] == ".":
+                        if not filename[:2] == metadata[-2:]:
+                            log('File has wrong/missing metadata: %s' % filename)
+                        else:
+                            log('File double checked for metadata: %s' % filename)
             check_filename_metadata(service, child['id'])
         page_token = children.get('nextPageToken')
         if not page_token:
@@ -214,7 +220,7 @@ def get_local_dir_color(dir_path):
         return None
 
 def loop_local(root_dir_path, total=0):
-    """ Generate a map of the local directory structure """
+    """Generates a map of the local directory structure."""
     result = {}
     for root, dirs, files in os.walk(root_dir_path):
         for name in files:
@@ -233,7 +239,7 @@ def loop_local(root_dir_path, total=0):
 
 @retry((errors.HttpError, socket.error), tries=10)
 def loop_drive(service, folder_id, result=None, total=0):
-    """ Generates a map of the google drive folder structure """
+    """Generates a map of the google drive folder structure."""
     page_token = None
     while True:
         param = {'maxResults': 1000}
@@ -254,9 +260,7 @@ def loop_drive(service, folder_id, result=None, total=0):
             return result, total
 
 def main():
-    """Main Function
-
-    """
+    """Main Function"""
     global FOLDER_COLORS
     global COLOR_MAP
     credentials = get_credentials()
@@ -268,6 +272,11 @@ def main():
     if len(sys.argv) == 1:
         FLAGS.print_help()
         sys.exit(1)
+
+    if ARGS.remote_dir and ARGS.metadata_from_title:
+        # filename_to_metadata(service, ARGS.remote_dir[0])
+        check_filename_metadata(service, ARGS.remote_dir[0])
+        sys.exit(0)
 
     if ARGS.local_dir and ARGS.remote_dir:
         diff_items = []
@@ -294,10 +303,6 @@ def main():
             for item in diff_items:
                 print(item)
         sys.exit(0)
-
-    if ARGS.metadata_from_title:
-        filename_to_metadata(service, ARGS.metadata_from_title[0])
-        check_filename_metadata(service, ARGS.metadata_from_title[0])
 
 if __name__ == '__main__':
     main()
