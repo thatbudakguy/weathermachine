@@ -6,7 +6,7 @@ import json
 import datetime
 import time
 import sys
-import csv
+import collections
 import argparse
 import socket
 from struct import unpack
@@ -27,20 +27,17 @@ FLAGS.add_argument(
     'remote_dir',
     metavar='R',
     type=str,
-    nargs=1,
     help='ID of a remote Google Drive folder.')
 FLAGS.add_argument(
     'local_dir',
     metavar='L',
     type=str,
-    nargs=1,
     help='Path to a local directory.')
 FLAGS.add_argument(
     '-c',
     '--colorize',
     type=str,
     default='colormap.json',
-    nargs=1,
     help='Path to a JSON colormap to colorize remote folder.'
 )
 FLAGS.add_argument(
@@ -191,8 +188,8 @@ def check_filename_metadata(service, folder_id):
         children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
         for child in children.get('items', []):
             if not child['mimeType'] == "application/vnd.google-apps.folder":
-                child_title = service.files().get(fileId=child['id'],fields='title').execute()
-                child_desc = service.files().get(fileId=child['id'],fields='description').execute()
+                child_title = service.files().get(fileId=child['id'], fields='title').execute()
+                child_desc = service.files().get(fileId=child['id'], fields='description').execute()
                 filename = child_title['title']
                 if 'description' in child_desc.keys():
                     metadata = child_desc['description']
@@ -223,17 +220,16 @@ def loop_local(root_dir_path, total=0):
     """Generates a map of the local directory structure."""
     result = {}
     for root, dirs, files in os.walk(root_dir_path):
-        for name in files:
-            if not name.startswith('.'):
+        for filename in files:
+            if not filename.startswith('.'):
                 parent = os.path.split(root)[1]
-                # color = get_local_dir_color(os.path.join(root,name))
-                result[name] = {'parent':parent}
+                result[filename] = {'parent':parent}
                 total += 1
-        for name in dirs:
-            if not name.startswith('.'):
+        for dirname in dirs:
+            if not dirname.startswith('.'):
                 parent = os.path.split(root)[1]
-                color = get_local_dir_color(os.path.join(root,name))
-                result[name] = {'parent':parent,'color':color}
+                color = get_local_dir_color(os.path.join(root, dirname))
+                result[dirname] = {'parent':parent, 'color':color}
                 total += 1
     return result, total
 
@@ -248,12 +244,12 @@ def loop_drive(service, folder_id, result=None, total=0):
         children = service.files().list(q="'%s' in parents" % folder_id, **param).execute()
         total += len(children.get('items', []))
         for child in children.get('items', []):
-            color = service.files().get(fileId=child['id'],fields='folderColorRgb').execute()
-            parent = service.files().get(fileId=child['parents'][0]['id'],fields='title').execute()
+            color = service.files().get(fileId=child['id'], fields='folderColorRgb').execute()
+            parent = service.files().get(fileId=child['parents'][0]['id'], fields='title').execute()
             if child['mimeType'] == "application/vnd.google-apps.folder":
-                result[child['title']] = {'parent':parent['title'], 'color':color['folderColorRgb']}
+                result[child['title']] = {'parent':parent['title'], 'color':color['folderColorRgb'], 'id':child['id']}
             else:
-                result[child['title']] = {'parent':parent['title']}
+                result[child['title']] = {'parent':parent['title'], 'id':child['id']}
             result, total = loop_drive(service, child['id'], result, total)
         page_token = children.get('nextPageToken')
         if not page_token:
@@ -267,23 +263,29 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('drive', 'v2', http=http)
     log("Authentication success.")
-
-    # if no arguments, show the help and exit
-    if len(sys.argv) == 1:
-        FLAGS.print_help()
-        sys.exit(1)
+    # fix slashes in path name
+    ARGS.local_dir = os.path.abspath(ARGS.local_dir)
 
     if ARGS.remote_dir and ARGS.metadata_from_title:
-        # filename_to_metadata(service, ARGS.remote_dir[0])
-        check_filename_metadata(service, ARGS.remote_dir[0])
+        filename_to_metadata(service, ARGS.remote_dir)
+        check_filename_metadata(service, ARGS.remote_dir)
+        sys.exit(0)
+
+    if ARGS.local_dir and ARGS.remote_dir and ARGS.colorize:
+        local_result, local_total = loop_local(ARGS.local_dir, 0)
+        remote_result, remote_total = loop_drive(service, ARGS.remote_dir, {}, 0)
+        for name, data in remote_result.iteritems():
+            if 'color' in data.keys():
+                matches = list(name for name in remote_result if name == remote_result[name])
+                print(matches)
         sys.exit(0)
 
     if ARGS.local_dir and ARGS.remote_dir:
         diff_items = []
-        root_dir_name = os.path.split(ARGS.local_dir[0])[1]
-        remote_dir = ARGS.remote_dir[0]
+        root_dir_name = os.path.split(ARGS.local_dir)[1]
+        remote_dir = ARGS.remote_dir
         remote_result, remote_total = loop_drive(service, remote_dir, {}, 0)
-        local_result, local_total = loop_local(ARGS.local_dir[0], 0)
+        local_result, local_total = loop_local(ARGS.local_dir, 0)
         if remote_total == local_total:
             print("Total of %d files match" % remote_total)
         elif local_total > remote_total:
